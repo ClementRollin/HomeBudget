@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { computeSheetMetrics, getMonthLabel } from "@/lib/sheets";
+import type { SheetWithRelations } from "@/lib/sheets";
 import { getCurrentSession } from "@/lib/auth";
 
 const SheetsPage = async () => {
@@ -12,30 +13,30 @@ const SheetsPage = async () => {
     redirect("/");
   }
 
-  const sheets = await prisma.sheet.findMany({
+  const sheets = (await prisma.sheet.findMany({
     include: { salaries: true, charges: true, budgets: true },
     where: { familyId: session.user.familyId },
     orderBy: [
       { year: "desc" },
       { month: "desc" },
     ],
-  });
+  })) as SheetWithRelations[];
 
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Historique</p>
-          <h1 className="text-3xl font-semibold text-white">Fiches mensuelles</h1>
+          <h1 className="text-3xl font-semibold text-white">Fiches de compte mensuelles</h1>
           <p className="text-sm text-slate-400">
-            Retrouvez toutes les fiches archivées, modifiez-les ou supprimez-les.
+            Retrouvez toutes les fiches de compte archivées, modifiez-les ou supprimez-les.
           </p>
         </div>
         <Link
           href="/sheets/new"
           className="rounded-2xl bg-accent px-5 py-3 text-sm font-semibold uppercase tracking-widest text-slate-900"
         >
-          Nouvelle fiche
+          Nouvelle fiche de compte
         </Link>
       </div>
 
@@ -55,7 +56,7 @@ const SheetsPage = async () => {
             {sheets.length === 0 && (
               <tr>
                 <td className="px-6 py-8 text-center text-slate-400" colSpan={6}>
-                  Pas encore de fiches créées.
+                  Pas encore de fiches de compte créées.
                 </td>
               </tr>
             )}

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { computeSheetMetrics, getMonthLabel, toSheetFormValues } from "@/lib/sheets";
 import { formatCurrency } from "@/lib/format";
 import { getCurrentSession } from "@/lib/auth";
+import { buildPeopleOptions } from "@/lib/utils";
 
 const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
   const session = await getCurrentSession();
@@ -12,10 +13,17 @@ const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
     redirect("/");
   }
 
-  const sheet = await prisma.sheet.findFirst({
-    where: { id: params.id, familyId: session.user.familyId },
-    include: { salaries: true, charges: true, budgets: true },
-  });
+  const [sheet, members] = await Promise.all([
+    prisma.sheet.findFirst({
+      where: { id: params.id, familyId: session.user.familyId },
+      include: { salaries: true, charges: true, budgets: true },
+    }),
+    prisma.user.findMany({
+      where: { familyId: session.user.familyId },
+      select: { id: true, name: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   if (!sheet) {
     notFound();
@@ -23,6 +31,7 @@ const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
 
   const metrics = computeSheetMetrics(sheet);
   const defaultValues = toSheetFormValues(sheet);
+  const peopleOptions = buildPeopleOptions(members, session.user.id);
 
   return (
     <div className="space-y-8">
@@ -52,7 +61,11 @@ const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
         </div>
       </div>
 
-      <SheetForm sheetId={sheet.id} initialValues={defaultValues} />
+      <SheetForm
+        sheetId={sheet.id}
+        initialValues={defaultValues}
+        peopleOptions={peopleOptions}
+      />
     </div>
   );
 };

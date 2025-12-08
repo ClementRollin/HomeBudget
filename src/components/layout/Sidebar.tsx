@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/sheets/new", label: "Nouvelle fiche" },
+  { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
 ];
 
@@ -16,7 +16,7 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex md:flex-col">
+    <aside className="hidden w-64 shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex md:flex-col">
       <div className="mb-10">
         <p className="text-xs uppercase tracking-widest text-slate-400">Projet</p>
         <p className="text-2xl font-semibold text-white">HomeBudget</p>
