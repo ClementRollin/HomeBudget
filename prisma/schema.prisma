@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Family {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+  users      User[]
+  sheets     Sheet[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  family    Family   @relation(fields: [familyId], references: [id])
+  familyId  String
+  sheets    Sheet[]
+}
+
+model Sheet {
+  id        String    @id @default(cuid())
+  year      Int
+  month     Int
+  family    Family    @relation(fields: [familyId], references: [id])
+  familyId  String
+  owner     User?     @relation(fields: [ownerId], references: [id])
+  ownerId   String?
+  salaries  Salary[]
+  charges   Charge[]
+  budgets   Budget[]
+  createdAt DateTime  @default(now())
+}
+
+model Salary {
+  id       String  @id @default(cuid())
+  sheet    Sheet   @relation(fields: [sheetId], references: [id])
+  sheetId  String
+  person   String
+  label    String
+  amount   Decimal @db.Decimal(10, 2)
+}
+
+model Charge {
+  id       String  @id @default(cuid())
+  sheet    Sheet   @relation(fields: [sheetId], references: [id])
+  sheetId  String
+  type     String
+  person   String?
+  label    String
+  amount   Decimal @db.Decimal(10, 2)
+}
+
+model Budget {
+  id       String  @id @default(cuid())
+  sheet    Sheet   @relation(fields: [sheetId], references: [id])
+  sheetId  String
+  label    String
+  amount   Decimal @db.Decimal(10, 2)
+}
