@@ -11,19 +11,19 @@ export const CHARGE_TYPES = [
 
 export const salarySchema = z.object({
   person: z.string().min(1, "Personne requise"),
-  label: z.string().min(1, "Intitul? requis"),
+  label: z.string().min(1, "Intitulé requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const chargeSchema = z.object({
   type: z.enum(CHARGE_TYPES),
   person: z.string().optional().nullable(),
-  label: z.string().min(1, "Intitul? requis"),
+  label: z.string().min(1, "Intitulé requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const budgetSchema = z.object({
-  label: z.string().min(1, "Intitul? requis"),
+  label: z.string().min(1, "Intitulé requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 

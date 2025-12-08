@@ -164,8 +164,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
       <section className="grid gap-6 md:grid-cols-2">
 
         <div>
-
-          <label htmlFor="year" className="text-sm text-slate-400">AnnÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©e</label>
+          <label htmlFor="year" className="text-sm text-slate-400">Année</label>
           <input
             id="year"
             type="number"
@@ -249,13 +248,9 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
             </select>
 
             <input
-
-              placeholder="LibellÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©"
-
+              placeholder="Libellé"
               {...form.register(`salaries.${index}.label` as const)}
-
               className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
             />
 
             <input
@@ -296,7 +291,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
         title="Charges"
 
-        description="DÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©clarez toutes les dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©penses prÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©vues"
+        description="Déclarez toutes les dépenses prévues"
 
         emptyCta="Ajouter une charge"
 
@@ -359,13 +354,9 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
             />
 
             <input
-
-              placeholder="LibellÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©"
-
+              placeholder="Libellé"
               {...form.register(`charges.${index}.label` as const)}
-
               className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
             />
 
             <input
@@ -406,7 +397,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
         title="Budgets"
 
-        description="RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©partissez les enveloppes mensuelles"
+        description="Répartissez les enveloppes mensuelles"
 
         emptyCta="Ajouter un budget"
 
@@ -425,13 +416,9 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
           >
 
             <input
-
-              placeholder="LibellÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©"
-
+              placeholder="Libellé"
               {...form.register(`budgets.${index}.label` as const)}
-
               className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
             />
 
             <input
@@ -482,7 +469,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
         >
 
-          {sheetId ? "Mettre ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  jour" : "CrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©er la fiche"}
+          {sheetId ? "Mettre à jour" : "Créer la fiche"}
         </button>
 
         {sheetId ? (
@@ -567,7 +554,7 @@ const DynamicFieldSection = ({
 
       >
 
-        {isEmpty ? emptyCta : "Ajouter un ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©lÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ment"}
+        {isEmpty ? emptyCta : "Ajouter un élément"}
       </button>
 
     </section>
