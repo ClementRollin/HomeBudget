@@ -1,4 +1,4 @@
-﻿import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -108,9 +108,14 @@ export async function DELETE(
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 
-  await prisma.sheet.delete({
-    where: { id },
-  });
+  await prisma.$transaction([
+    prisma.salary.deleteMany({ where: { sheetId: id } }),
+    prisma.charge.deleteMany({ where: { sheetId: id } }),
+    prisma.budget.deleteMany({ where: { sheetId: id } }),
+    prisma.sheet.delete({
+      where: { id },
+    }),
+  ]);
 
   return NextResponse.json({ id });
 }

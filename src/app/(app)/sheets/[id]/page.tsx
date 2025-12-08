@@ -7,7 +7,8 @@ import { formatCurrency } from "@/lib/format";
 import { getCurrentSession } from "@/lib/auth";
 import { buildPeopleOptions } from "@/lib/utils";
 
-const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
+const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
   const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/");
@@ -15,7 +16,7 @@ const SheetDetailPage = async ({ params }: { params: { id: string } }) => {
 
   const [sheet, members] = await Promise.all([
     prisma.sheet.findFirst({
-      where: { id: params.id, familyId: session.user.familyId },
+      where: { id, familyId: session.user.familyId },
       include: { salaries: true, charges: true, budgets: true },
     }),
     prisma.user.findMany({

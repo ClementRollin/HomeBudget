@@ -26,7 +26,7 @@ export async function GET() {
   const session = await getCurrentSession();
 
   if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisÃ©" }, { status: 401 });
   }
 
   const sheets = await prisma.sheet.findMany({
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   const session = await getCurrentSession();
 
   if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    return NextResponse.json({ message: "Non autorisÃ©" }, { status: 401 });
   }
 
   const body = await request.json();

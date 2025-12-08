@@ -3,15 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env.development -- next dev",
+    "dev:prod": "dotenv -e .env.production -- next dev",
     "build": "next build",
+    "build:prod-local": "dotenv -e .env.production -- next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:generate": "dotenv -e .env.development -- prisma generate",
+    "prisma:migrate": "dotenv -e .env.development -- prisma migrate dev",
+    "prisma:migrate:prod": "dotenv -e .env.production -- prisma migrate deploy",
+    "prisma:studio": "dotenv -e .env.development -- prisma studio"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -30,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^7.4.4",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "prettier": "^3.7.4",
