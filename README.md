@@ -4,7 +4,7 @@
 
 # HomeBudget
 
-Application Next.js (App Router) pour gérer les fiches budgétaires mensuelles d’un foyer.  
+Application Next.js (App Router) pour gérer les comptes budgétaires mensuelles d’un foyer.  
 Stack : Next.js 16 · TypeScript · Tailwind CSS 4 · Prisma · Auth.js · PostgreSQL.
 
 </div>
@@ -12,7 +12,7 @@ Stack : Next.js 16 · TypeScript · Tailwind CSS 4 · Prisma · Auth.js · Postg
 ## Fonctionnalités
 
 - Authentification email/mot de passe avec création de famille et code d’invitation.
-- Isolation stricte des données par famille (multi-tenant) : seule votre famille voit ses fiches.
+- Isolation stricte des données par famille (multi-tenant) : seule votre famille voit ses fiches de compte.
 - Dashboard du mois courant, liste historique, création/édition avec salaires, charges et budgets.
 - Layout sécurisé avec sidebar fixe, header personnalisé (prénom + code famille) et dark mode.
 - API Routes Next.js protégées par middleware + Prisma pour le CRUD.

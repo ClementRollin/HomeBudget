@@ -1,28 +1,29 @@
+
 import { z } from "zod";
 
-export const PEOPLE = ["ME", "HER"] as const;
+export const PEOPLE = ["Moi", "Partenaire"] as const;
 export const CHARGE_TYPES = [
-  "FIXED_COMMON",
-  "FIXED_INDIVIDUAL",
-  "EXCEPTIONAL_COMMON",
-  "EXCEPTIONAL_INDIVIDUAL",
+  "FIXE_COMMUN",
+  "FIXE_INDIVIDUEL",
+  "EXCEPTIONNEL_COMMUN",
+  "EXCEPTIONNEL_INDIVIDUEL",
 ] as const;
 
 export const salarySchema = z.object({
-  person: z.enum(PEOPLE),
-  label: z.string().min(1, "Intitulé requis"),
+  person: z.string().min(1, "Personne requise"),
+  label: z.string().min(1, "Intitul? requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const chargeSchema = z.object({
   type: z.enum(CHARGE_TYPES),
   person: z.string().optional().nullable(),
-  label: z.string().min(1, "Intitulé requis"),
+  label: z.string().min(1, "Intitul? requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const budgetSchema = z.object({
-  label: z.string().min(1, "Intitulé requis"),
+  label: z.string().min(1, "Intitul? requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 

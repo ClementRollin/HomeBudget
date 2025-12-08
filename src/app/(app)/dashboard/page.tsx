@@ -63,7 +63,7 @@ const DashboardPage = async () => {
       <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-white">Dernières fiches</h2>
+            <h2 className="text-xl font-semibold text-white">Dernières fiches de comptes</h2>
             <p className="text-sm text-slate-400">Historique rapide des 5 derniers mois suivis.</p>
           </div>
           <Link
@@ -79,39 +79,39 @@ const DashboardPage = async () => {
               Aucune fiche enregistrée pour le moment. Créez-en une nouvelle dès maintenant !
             </p>
           )}
-          {history.map((sheet) => {
+            {history.map((sheet: typeof history[number]) => {
             const sheetMetrics = computeSheetMetrics(sheet);
             return (
               <Link
-                key={sheet.id}
-                href={`/sheets/${sheet.id}`}
-                className="flex flex-col rounded-2xl border border-white/5 bg-white/5 p-4 transition hover:border-accent/50 md:flex-row md:items-center md:justify-between"
+              key={sheet.id}
+              href={`/sheets/${sheet.id}`}
+              className="flex flex-col rounded-2xl border border-white/5 bg-white/5 p-4 transition hover:border-accent/50 md:flex-row md:items-center md:justify-between"
               >
+              <div>
+                <p className="text-lg font-semibold text-white">
+                {getMonthLabel(sheet.month, sheet.year)}
+                </p>
+                <p className="text-sm text-slate-400">
+                {sheet.salaries.length} salaires • {sheet.charges.length} charges • {sheet.budgets.length} budgets
+                </p>
+              </div>
+              <div className="mt-3 flex gap-6 md:mt-0">
                 <div>
-                  <p className="text-lg font-semibold text-white">
-                    {getMonthLabel(sheet.month, sheet.year)}
-                  </p>
-                  <p className="text-sm text-slate-400">
-                    {sheet.salaries.length} salaires • {sheet.charges.length} charges • {sheet.budgets.length} budgets
-                  </p>
+                <p className="text-xs text-slate-400">Solde</p>
+                <p className="font-semibold text-white">
+                  {formatCurrency(sheetMetrics.balance)}
+                </p>
                 </div>
-                <div className="mt-3 flex gap-6 md:mt-0">
-                  <div>
-                    <p className="text-xs text-slate-400">Solde</p>
-                    <p className="font-semibold text-white">
-                      {formatCurrency(sheetMetrics.balance)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Charges</p>
-                    <p className="font-semibold text-rose-300">
-                      {formatCurrency(sheetMetrics.expenses)}
-                    </p>
-                  </div>
+                <div>
+                <p className="text-xs text-slate-400">Charges</p>
+                <p className="font-semibold text-rose-300">
+                  {formatCurrency(sheetMetrics.expenses)}
+                </p>
                 </div>
+              </div>
               </Link>
             );
-          })}
+            })}
         </div>
       </section>
     </div>
