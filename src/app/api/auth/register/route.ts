@@ -5,13 +5,26 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { generateInviteCode, slugify } from "@/lib/utils";
 
-const registerSchema = z.object({
+const baseFields = {
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  familyName: z.string().min(2),
-  inviteCode: z.string().optional().transform((code) => code?.trim().toUpperCase()),
-});
+};
+
+const registerSchema = z.discriminatedUnion("mode", [
+  z.object({
+    mode: z.literal("create"),
+    ...baseFields,
+    familyName: z.string().min(2),
+    inviteCode: z.string().optional(),
+  }),
+  z.object({
+    mode: z.literal("join"),
+    ...baseFields,
+    familyName: z.string().optional(),
+    inviteCode: z.string().min(4).transform((code) => code.trim().toUpperCase()),
+  }),
+]);
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -21,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Payload invalide" }, { status: 400 });
   }
 
-  const { name, email, password, familyName, inviteCode } = parsed.data;
+  const { mode, name, email, password, familyName, inviteCode } = parsed.data;
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
@@ -29,12 +42,18 @@ export async function POST(request: Request) {
   }
 
   let family = null;
-  if (inviteCode) {
+  if (mode === "join") {
+    if (!inviteCode) {
+      return NextResponse.json({ message: "Code famille requis" }, { status: 400 });
+    }
     family = await prisma.family.findUnique({ where: { inviteCode } });
     if (!family) {
       return NextResponse.json({ message: "Code famille invalide" }, { status: 404 });
     }
   } else {
+    if (!familyName) {
+      return NextResponse.json({ message: "Nom de famille requis" }, { status: 400 });
+    }
     const baseSlug = slugify(familyName);
     let slug = baseSlug;
     let suffix = 1;

@@ -1,5 +1,5 @@
 ﻿import type { Budget, Charge, Salary, Sheet } from "@prisma/client";
-import type { SheetFormValues } from "@/lib/validations/sheet";
+import { CHARGE_TYPES, type SheetFormValues } from "@/lib/validations/sheet";
 
 export type SheetWithRelations = Sheet & {
   salaries: Salary[];
@@ -33,6 +33,39 @@ export const getMonthLabel = (month: number, year?: number) => {
 };
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0);
+const normalizePersonLabel = (value?: string | null) => {
+  if (!value) {
+    return "";
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const upper = trimmed.toUpperCase();
+  if (upper === "ME") {
+    return "Moi";
+  }
+  if (upper === "HER") {
+    return "Elle";
+  }
+  return trimmed;
+};
+const CHARGE_TYPE_LEGACY_MAP: Record<string, (typeof CHARGE_TYPES)[number]> = {
+  FIXED_COMMON: "FIXE_COMMUN",
+  FIXED_INDIVIDUAL: "FIXE_INDIVIDUEL",
+  EXCEPTIONAL_COMMON: "EXCEPTIONNEL_COMMUN",
+  EXCEPTIONAL_INDIVIDUAL: "EXCEPTIONNEL_INDIVIDUEL",
+};
+const normalizeChargeType = (value?: string | null): (typeof CHARGE_TYPES)[number] => {
+  if (!value) {
+    return CHARGE_TYPES[0];
+  }
+  const upper = value.toUpperCase();
+  if (CHARGE_TYPES.includes(upper as (typeof CHARGE_TYPES)[number])) {
+    return upper as (typeof CHARGE_TYPES)[number];
+  }
+  return CHARGE_TYPE_LEGACY_MAP[upper] ?? CHARGE_TYPES[0];
+};
 
 const sumAmount = <T extends { amount: unknown }>(items: T[]) =>
   items.reduce((total, item) => total + decimalToNumber(item.amount), 0);
@@ -55,12 +88,12 @@ export const toSheetFormValues = (
   year: sheet.year,
   month: sheet.month,
   salaries: sheet.salaries.map((salary: Salary) => ({
-    person: salary.person as SheetFormValues["salaries"][number]["person"],
+    person: normalizePersonLabel(salary.person),
     label: salary.label,
     amount: decimalToNumber(salary.amount),
   })),
   charges: sheet.charges.map((charge: Charge) => ({
-    type: charge.type as SheetFormValues["charges"][number]["type"],
+    type: normalizeChargeType(charge.type),
     person: charge.person ?? "",
     label: charge.label,
     amount: decimalToNumber(charge.amount),

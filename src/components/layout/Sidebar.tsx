@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -8,15 +7,31 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/sheets/new", label: "Nouvelle fiche" },
+  { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
 ];
 
 const Sidebar = () => {
   const pathname = usePathname();
 
+  const isActive = (href: string) => {
+    if (!pathname) {
+      return false;
+    }
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    if (href === "/sheets/new") {
+      return pathname === "/sheets/new";
+    }
+    if (href === "/sheets") {
+      return pathname === "/sheets" || (pathname.startsWith("/sheets/") && !pathname.startsWith("/sheets/new"));
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
-    <aside className="hidden w-64 flex-shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex md:flex-col">
+    <aside className="hidden w-64 shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex md:flex-col">
       <div className="mb-10">
         <p className="text-xs uppercase tracking-widest text-slate-400">Projet</p>
         <p className="text-2xl font-semibold text-white">HomeBudget</p>
@@ -29,9 +44,7 @@ const Sidebar = () => {
             href={link.href}
             className={cn(
               "block rounded-xl px-4 py-2 hover:bg-white/10",
-              pathname?.startsWith(link.href)
-                ? "bg-white/10 text-white"
-                : "text-slate-400",
+              isActive(link.href) ? "bg-white/10 text-white" : "text-slate-400",
             )}
           >
             {link.label}

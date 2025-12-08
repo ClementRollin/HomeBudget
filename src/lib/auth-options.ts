@@ -19,9 +19,15 @@ type AppUser = {
   familyInviteCode: string;
 };
 
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
+if (!authSecret) {
+  throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas défini dans l'environnement.");
+}
+
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET,
+  secret: authSecret,
   pages: {
     signIn: "/",
   },
