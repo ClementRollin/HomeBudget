@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import AuthSwitcher from "@/components/auth/AuthSwitcher";
 
 const AuthPage = () => {
@@ -10,7 +12,9 @@ const AuthPage = () => {
           Crez votre famille ou rejoignez-la grce  son code d&apos;invitation.
         </p>
       </div>
-      <AuthSwitcher />
+      <Suspense fallback={<p className="text-sm text-slate-400">Chargement?</p>}>
+        <AuthSwitcher />
+      </Suspense>
       <p className="text-xs text-slate-500">
         Une fois connect, vous accderez  un espace partag par famille.
       </p>
@@ -18,4 +22,5 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default AuthPage;
+
