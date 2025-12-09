@@ -7,6 +7,21 @@ export type SheetWithRelations = Sheet & {
   budgets: Budget[];
 };
 
+export type IncomeDistributionItem = {
+  person: string;
+  amount: number;
+  percentage: number;
+  fixedChargeShare: number;
+};
+
+export type NormalizedCharge = {
+  id: string;
+  type: (typeof CHARGE_TYPES)[number];
+  person: string;
+  label: string;
+  amount: number;
+};
+
 export const MONTH_NAMES = [
   "Janvier",
   "Février",
@@ -33,7 +48,7 @@ export const getMonthLabel = (month: number, year?: number) => {
 };
 
 const decimalToNumber = (value: unknown) => Number(value ?? 0);
-const normalizePersonLabel = (value?: string | null) => {
+export const normalizePersonLabel = (value?: string | null) => {
   if (!value) {
     return "";
   }
@@ -56,7 +71,7 @@ const CHARGE_TYPE_LEGACY_MAP: Record<string, (typeof CHARGE_TYPES)[number]> = {
   EXCEPTIONAL_COMMON: "EXCEPTIONNEL_COMMUN",
   EXCEPTIONAL_INDIVIDUAL: "EXCEPTIONNEL_INDIVIDUEL",
 };
-const normalizeChargeType = (value?: string | null): (typeof CHARGE_TYPES)[number] => {
+export const normalizeChargeType = (value?: string | null): (typeof CHARGE_TYPES)[number] => {
   if (!value) {
     return CHARGE_TYPES[0];
   }
@@ -81,6 +96,70 @@ export const computeSheetMetrics = (sheet: SheetWithRelations) => {
     balance: income - expenses,
   };
 };
+
+export const aggregateSheetMetrics = (sheets: SheetWithRelations[]) =>
+  sheets.reduce(
+    (totals, sheet) => {
+      const metrics = computeSheetMetrics(sheet);
+      totals.income += metrics.income;
+      totals.expenses += metrics.expenses;
+      totals.budgets += metrics.budgets;
+      totals.balance += metrics.balance;
+      return totals;
+    },
+    { income: 0, expenses: 0, budgets: 0, balance: 0 },
+  );
+
+export const computeIncomeDistribution = (
+  sheet: SheetWithRelations,
+): {
+  totalIncome: number;
+  fixedCommonCharges: number;
+  distribution: IncomeDistributionItem[];
+} => {
+  const totalsByPerson = new Map<string, number>();
+  sheet.salaries.forEach((salary) => {
+    const person = normalizePersonLabel(salary.person) || "Membre";
+    const current = totalsByPerson.get(person) ?? 0;
+    totalsByPerson.set(person, current + decimalToNumber(salary.amount));
+  });
+
+  const totalIncome = Array.from(totalsByPerson.values()).reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
+
+  const fixedCommonCharges = sumAmount(
+    sheet.charges.filter(
+      (charge) => normalizeChargeType(charge.type) === "FIXE_COMMUN",
+    ),
+  );
+
+  const distribution = Array.from(totalsByPerson.entries())
+    .map(([person, amount]) => {
+      const percentage = totalIncome > 0 ? amount / totalIncome : 0;
+      return {
+        person,
+        amount,
+        percentage,
+        fixedChargeShare: fixedCommonCharges * percentage,
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
+  return { totalIncome, fixedCommonCharges, distribution };
+};
+
+export const normalizeSheetCharges = (
+  sheet: SheetWithRelations,
+): NormalizedCharge[] =>
+  sheet.charges.map((charge) => ({
+    id: charge.id,
+    type: normalizeChargeType(charge.type),
+    person: normalizePersonLabel(charge.person) || "Commun",
+    label: charge.label,
+    amount: decimalToNumber(charge.amount),
+  }));
 
 export const toSheetFormValues = (
   sheet: SheetWithRelations,
