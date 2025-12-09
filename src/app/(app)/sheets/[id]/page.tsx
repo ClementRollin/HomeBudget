@@ -15,12 +15,17 @@ import { formatCurrency, formatPercent } from "@/lib/format";
 import { getCurrentSession } from "@/lib/auth";
 import { buildPeopleOptions } from "@/lib/utils";
 
-const CHARGE_TYPE_LABELS: Record<string, string> = {
+const CHARGE_TYPE_LABELS = {
   FIXE_COMMUN: "Charges fixes communes",
   FIXE_INDIVIDUEL: "Charges fixes individuelles",
   EXCEPTIONNEL_COMMUN: "Charges exceptionnelles communes",
   EXCEPTIONNEL_INDIVIDUEL: "Charges exceptionnelles individuelles",
-};
+} as const;
+
+const INDIVIDUAL_TYPES: Array<keyof typeof CHARGE_TYPE_LABELS> = [
+  "FIXE_INDIVIDUEL",
+  "EXCEPTIONNEL_INDIVIDUEL",
+];
 
 const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
@@ -147,16 +152,19 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
     0,
   );
 
-  const chargeSummary = Array.from(chargeTotalsByType.entries()).map(([type, data]) => ({
-    type,
-    label: CHARGE_TYPE_LABELS[type] ?? type,
-    amount: data.amount,
-    breakdown: INDIVIDUAL_TYPES.includes(type)
-      ? Array.from(data.byPerson.entries())
-          .map(([person, amount]) => ({ person, amount }))
-          .sort((a, b) => b.amount - a.amount)
-      : null,
-  }));
+  const chargeSummary = Array.from(chargeTotalsByType.entries()).map(([type, data]) => {
+    const category = (type ?? "FIXE_COMMUN") as keyof typeof CHARGE_TYPE_LABELS;
+    return {
+      type: category,
+      label: CHARGE_TYPE_LABELS[category] ?? category,
+      amount: data.amount,
+      breakdown: INDIVIDUAL_TYPES.includes(category)
+        ? Array.from(data.byPerson.entries())
+            .map(([person, amount]) => ({ person, amount }))
+            .sort((a, b) => b.amount - a.amount)
+        : null,
+    };
+  });
 
   return (
     <div className="space-y-10">
