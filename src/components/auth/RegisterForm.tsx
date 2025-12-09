@@ -52,6 +52,7 @@ const RegisterForm = () => {
       inviteCode: "",
     },
   });
+  // eslint-disable-next-line react-hooks/incompatible-library
   const mode = watch("mode");
 
   const handleModeChange = (nextMode: RegisterValues["mode"]) => {

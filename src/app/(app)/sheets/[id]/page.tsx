@@ -22,11 +22,6 @@ const CHARGE_TYPE_LABELS = {
   EXCEPTIONNEL_INDIVIDUEL: "Charges exceptionnelles individuelles",
 } as const;
 
-const INDIVIDUAL_TYPES: Array<keyof typeof CHARGE_TYPE_LABELS> = [
-  "FIXE_INDIVIDUEL",
-  "EXCEPTIONNEL_INDIVIDUEL",
-];
-
 const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const session = await getCurrentSession();
