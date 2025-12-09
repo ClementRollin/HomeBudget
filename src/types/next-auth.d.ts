@@ -7,6 +7,7 @@ declare module "next-auth" {
       familyId: string;
       familyName: string;
       familyInviteCode: string;
+      familyMemberId: string;
     };
   }
 
@@ -15,6 +16,7 @@ declare module "next-auth" {
     familyId: string;
     familyName: string;
     familyInviteCode: string;
+    familyMemberId: string;
   }
 }
 
@@ -24,5 +26,6 @@ declare module "next-auth/jwt" {
     familyId?: string;
     familyName?: string;
     familyInviteCode?: string;
+    familyMemberId?: string;
   }
 }

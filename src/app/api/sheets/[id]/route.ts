@@ -2,25 +2,20 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { SheetWithRelations } from "@/lib/sheets";
+import {
+  decryptSheet,
+  encryptSheetPayload,
+  type SecureSheet,
+} from "@/lib/sheets";
 import { sheetFormSchema } from "@/lib/validations/sheet";
 
-const serializeSheet = (sheet: SheetWithRelations) => ({
-  ...sheet,
-  createdAt: sheet.createdAt.toISOString(),
-  salaries: sheet.salaries.map((salary: SheetWithRelations["salaries"][number]) => ({
-    ...salary,
-    amount: Number(salary.amount),
-  })),
-  charges: sheet.charges.map((charge: SheetWithRelations["charges"][number]) => ({
-    ...charge,
-    amount: Number(charge.amount),
-  })),
-  budgets: sheet.budgets.map((budget: SheetWithRelations["budgets"][number]) => ({
-    ...budget,
-    amount: Number(budget.amount),
-  })),
-});
+const serializeSheet = (sheet: SecureSheet) => {
+  const decrypted = decryptSheet(sheet);
+  return {
+    ...decrypted,
+    createdAt: decrypted.createdAt.toISOString(),
+  };
+};
 
 export async function GET(
   _request: NextRequest,
@@ -34,7 +29,11 @@ export async function GET(
 
   const sheet = await prisma.sheet.findFirst({
     where: { id, familyId: session.user.familyId },
-    include: { salaries: true, charges: true, budgets: true },
+    include: {
+      salaries: { include: { member: true } },
+      charges: { include: { member: true } },
+      budgets: true,
+    },
   });
 
   if (!sheet) {
@@ -67,6 +66,8 @@ export async function PUT(
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 
+  const securePayload = await encryptSheetPayload(session.user.familyId, parsed.data);
+
   await prisma.$transaction([
     prisma.salary.deleteMany({ where: { sheetId: id } }),
     prisma.charge.deleteMany({ where: { sheetId: id } }),
@@ -76,14 +77,9 @@ export async function PUT(
       data: {
         year: parsed.data.year,
         month: parsed.data.month,
-        salaries: { create: parsed.data.salaries },
-        charges: {
-          create: parsed.data.charges.map((charge) => ({
-            ...charge,
-            person: charge.person || null,
-          })),
-        },
-        budgets: { create: parsed.data.budgets },
+        salaries: { create: securePayload.salaries },
+        charges: { create: securePayload.charges },
+        budgets: { create: securePayload.budgets },
       },
     }),
   ]);

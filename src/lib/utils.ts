@@ -13,23 +13,23 @@ export const slugify = (value: string) =>
 export const generateInviteCode = () =>
   Math.random().toString(36).replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase();
 
-type MinimalMember = { id: string; name: string | null };
+type MinimalMember = { id: string; displayName: string };
 
 export const buildPeopleOptions = (
   members: MinimalMember[],
-  currentUserId?: string,
+  primaryMemberId?: string,
 ) => {
   if (!members.length) {
     return ["Moi", "Partenaire"];
   }
 
   const ordered = [...members];
-  if (currentUserId) {
+  if (primaryMemberId) {
     ordered.sort((a, b) => {
-      if (a.id === currentUserId) {
+      if (a.id === primaryMemberId) {
         return -1;
       }
-      if (b.id === currentUserId) {
+      if (b.id === primaryMemberId) {
         return 1;
       }
       return 0;
@@ -38,11 +38,8 @@ export const buildPeopleOptions = (
 
   return ordered.map((member, index) => {
     const fallback = index === 0 ? "Moi" : `Membre ${index + 1}`;
-    const raw = member.name?.trim();
-    if (!raw) {
-      return fallback;
-    }
-    const [first] = raw.split(/\s+/);
+    const raw = member.displayName?.trim();
+    const [first] = raw?.split(/\s+/) ?? [];
     return first || fallback;
   });
 };

@@ -13,6 +13,7 @@ Stack : Next.js 16 · TypeScript · Tailwind CSS 4 · Prisma · Auth.js · Postg
 
 - Authentification email/mot de passe avec création de famille et code d’invitation.
 - Isolation stricte des données par famille (multi-tenant) : seule votre famille voit ses fiches de compte.
+- Chiffrement au repos des libellés/montants (AES-256-GCM via `ENCRYPTION_KEY`).
 - Dashboard du mois courant, liste historique, création/édition avec salaires, charges et budgets.
 - Layout sécurisé avec sidebar fixe, header personnalisé (prénom + code famille) et dark mode.
 - API Routes Next.js protégées par middleware + Prisma pour le CRUD.
@@ -38,8 +39,8 @@ Deux fichiers sont fournis :
 
 | Fichier              | Utilisation                            | Contenu                                                                            |
 | -------------------- | -------------------------------------- | ---------------------------------------------------------------------------------- |
-| `.env.development`   | Développement local                    | Connexion Postgres locale + `AUTH_SECRET` de test                                  |
-| `.env.production`    | Préproduction / Supabase               | Modèle de chaîne Supabase (avec `pgbouncer=true&connection_limit=1`) + secret prod |
+| `.env.development`   | Développement local                    | Connexion Postgres locale + `AUTH_SECRET` + `ENCRYPTION_KEY` de test               |
+| `.env.production`    | Préproduction / Supabase               | Chaîne Supabase (`pgbouncer=true&connection_limit=1`) + `AUTH_SECRET` + `ENCRYPTION_KEY` |
 
 Modifiez les valeurs selon votre environnement puis lancez les scripts via `dotenv-cli` (inclus dans les dépendances) :
 

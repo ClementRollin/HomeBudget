@@ -14,6 +14,7 @@ model Family {
   inviteCode String   @unique
   createdAt  DateTime @default(now())
   users      User[]
+  members    FamilyMember[]
   sheets     Sheet[]
 }
 
@@ -27,6 +28,23 @@ model User {
   family    Family   @relation(fields: [familyId], references: [id])
   familyId  String
   sheets    Sheet[]
+  member    FamilyMember?
+}
+
+model FamilyMember {
+  id          String   @id @default(cuid())
+  family      Family   @relation(fields: [familyId], references: [id])
+  familyId    String
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?  @unique
+  displayName String
+  slug        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  salaries    Salary[]
+  charges     Charge[]
+
+  @@unique([familyId, slug])
 }
 
 model Sheet {
@@ -47,25 +65,37 @@ model Salary {
   id       String  @id @default(cuid())
   sheet    Sheet   @relation(fields: [sheetId], references: [id])
   sheetId  String
-  person   String
-  label    String
-  amount   Decimal @db.Decimal(10, 2)
+  member   FamilyMember? @relation(fields: [memberId], references: [id])
+  memberId String?
+  encryptedLabel  String @default("")
+  encryptedAmount String @default("")
+  createdAt       DateTime @default(now())
 }
 
 model Charge {
-  id       String  @id @default(cuid())
-  sheet    Sheet   @relation(fields: [sheetId], references: [id])
+  id       String        @id @default(cuid())
+  sheet    Sheet         @relation(fields: [sheetId], references: [id])
   sheetId  String
-  type     String
-  person   String?
-  label    String
-  amount   Decimal @db.Decimal(10, 2)
+  category ChargeCategory @default(FIXE_COMMUN)
+  member   FamilyMember? @relation(fields: [memberId], references: [id])
+  memberId String?
+  encryptedLabel  String @default("")
+  encryptedAmount String @default("")
+  createdAt       DateTime @default(now())
 }
 
 model Budget {
   id       String  @id @default(cuid())
   sheet    Sheet   @relation(fields: [sheetId], references: [id])
   sheetId  String
-  label    String
-  amount   Decimal @db.Decimal(10, 2)
+  encryptedLabel  String @default("")
+  encryptedAmount String @default("")
+  createdAt       DateTime @default(now())
+}
+
+enum ChargeCategory {
+  FIXE_COMMUN
+  FIXE_INDIVIDUEL
+  EXCEPTIONNEL_COMMUN
+  EXCEPTIONNEL_INDIVIDUEL
 }

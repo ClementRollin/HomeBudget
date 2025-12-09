@@ -7,10 +7,18 @@ import { prisma } from "@/lib/prisma";
 import {
   aggregateSheetMetrics,
   computeSheetMetrics,
+  decryptSheet,
   getCurrentPeriod,
   getMonthLabel,
+  type SecureSheet,
 } from "@/lib/sheets";
 import { getCurrentSession } from "@/lib/auth";
+
+const includeConfig = {
+  salaries: { include: { member: true } },
+  charges: { include: { member: true } },
+  budgets: true,
+};
 
 const DashboardPage = async () => {
   const session = await getCurrentSession();
@@ -22,26 +30,30 @@ const DashboardPage = async () => {
   const [currentSheet, history, yearSheets] = await Promise.all([
     prisma.sheet.findFirst({
       where: { month: period.month, year: period.year, familyId: session.user.familyId },
-      include: { salaries: true, charges: true, budgets: true },
+      include: includeConfig,
       orderBy: { createdAt: "desc" },
-    }),
+    }) as Promise<SecureSheet | null>,
     prisma.sheet.findMany({
-      include: { salaries: true, charges: true, budgets: true },
       where: { familyId: session.user.familyId },
+      include: includeConfig,
       orderBy: [
         { year: "desc" },
         { month: "desc" },
       ],
       take: 5,
-    }),
+    }) as Promise<SecureSheet[]>,
     prisma.sheet.findMany({
-      include: { salaries: true, charges: true, budgets: true },
       where: { familyId: session.user.familyId, year: period.year },
-    }),
+      include: includeConfig,
+    }) as Promise<SecureSheet[]>,
   ]);
 
-  const currentMetrics = currentSheet ? computeSheetMetrics(currentSheet) : null;
-  const yearMetrics = aggregateSheetMetrics(yearSheets);
+  const decryptedCurrent = currentSheet ? decryptSheet(currentSheet) : null;
+  const decryptedHistory = history.map(decryptSheet);
+  const decryptedYearSheets = yearSheets.map(decryptSheet);
+
+  const currentMetrics = decryptedCurrent ? computeSheetMetrics(decryptedCurrent) : null;
+  const yearMetrics = aggregateSheetMetrics(decryptedYearSheets);
   const monthLabel = getMonthLabel(period.month, period.year);
   const firstName = session.user.name?.split(/\s+/)[0] ?? session.user.familyName ?? "famille";
 
@@ -59,10 +71,10 @@ const DashboardPage = async () => {
           <div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
             <p className="text-sm text-slate-400">Besoin d&apos;ajuster une fiche ?</p>
             <Link
-              href={currentSheet ? `/sheets/${currentSheet.id}` : "/sheets/new"}
+              href={decryptedCurrent ? `/sheets/${decryptedCurrent.id}` : "/sheets/new"}
               className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-accent"
             >
-              {currentSheet ? "Ouvrir la fiche en cours" : "Créer la première fiche"}
+              {decryptedCurrent ? "Ouvrir la fiche en cours" : "Créer la première fiche"}
             </Link>
           </div>
         </div>
@@ -98,16 +110,16 @@ const DashboardPage = async () => {
             <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Mois en cours</p>
             <h2 className="text-2xl font-semibold text-white">Récapitulatif de {monthLabel}</h2>
             <p className="text-sm text-slate-400">
-              {currentSheet
+              {decryptedCurrent
                 ? "Votre fiche mensuelle est prête, voici les indicateurs clés."
                 : "Aucune fiche pour ce mois. Créez-en une pour suivre vos finances."}
             </p>
           </div>
           <Link
-            href={currentSheet ? `/sheets/${currentSheet.id}` : "/sheets/new"}
+            href={decryptedCurrent ? `/sheets/${decryptedCurrent.id}` : "/sheets/new"}
             className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-accent"
           >
-            {currentSheet ? "Voir la fiche" : "Créer une fiche"}
+            {decryptedCurrent ? "Voir la fiche" : "Créer une fiche"}
           </Link>
         </div>
         {currentMetrics ? (
@@ -125,7 +137,7 @@ const DashboardPage = async () => {
             {
               label: "Budgets actifs",
               value: formatCurrency(currentMetrics.budgets),
-              helper: "Enveloppes de {monthLabel}",
+              helper: `Enveloppes de ${monthLabel}`,
             },
             {
               label: "Solde prévisionnel",
@@ -135,9 +147,7 @@ const DashboardPage = async () => {
               <div key={card.label} className="rounded-2xl border border-white/5 bg-white/[0.04] p-4">
                 <p className="text-xs uppercase tracking-[0.25rem] text-slate-500">{card.label}</p>
                 <p className="mt-3 text-2xl font-semibold text-white">{card.value}</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {card.helper.replace("{monthLabel}", monthLabel)}
-                </p>
+                <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
               </div>
             ))}
           </div>
@@ -162,12 +172,12 @@ const DashboardPage = async () => {
           </Link>
         </div>
         <div className="mt-6 space-y-4">
-          {history.length === 0 ? (
+          {decryptedHistory.length === 0 ? (
             <p className="text-sm text-slate-400">
               Aucune fiche enregistrée pour le moment. Créez-en une nouvelle dès maintenant !
             </p>
           ) : (
-            history.map((sheet) => {
+            decryptedHistory.map((sheet) => {
               const sheetMetrics = computeSheetMetrics(sheet);
               return (
                 <Link

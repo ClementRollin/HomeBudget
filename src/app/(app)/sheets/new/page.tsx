@@ -2,8 +2,8 @@
 
 import SheetForm from "@/components/forms/SheetForm";
 import { getCurrentSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { buildPeopleOptions } from "@/lib/utils";
+import { fetchFamilyMembers } from "@/lib/sheets";
 
 const NewSheetPage = async () => {
   const session = await getCurrentSession();
@@ -11,13 +11,8 @@ const NewSheetPage = async () => {
     redirect("/");
   }
 
-  const members = await prisma.user.findMany({
-    where: { familyId: session.user.familyId },
-    select: { id: true, name: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const peopleOptions = buildPeopleOptions(members, session.user.id);
+  const members = await fetchFamilyMembers(session.user.familyId);
+  const peopleOptions = buildPeopleOptions(members, session.user.familyMemberId);
 
   return (
     <div className="space-y-8">

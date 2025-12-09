@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import {
   computeIncomeDistribution,
   computeSheetMetrics,
+  decryptSheet,
+  fetchFamilyMembers,
   getMonthLabel,
   normalizeSheetCharges,
   toSheetFormValues,
@@ -32,24 +34,25 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
   const [sheet, members] = await Promise.all([
     prisma.sheet.findFirst({
       where: { id, familyId: session.user.familyId },
-      include: { salaries: true, charges: true, budgets: true },
+      include: {
+        salaries: { include: { member: true } },
+        charges: { include: { member: true } },
+        budgets: true,
+      },
     }),
-    prisma.user.findMany({
-      where: { familyId: session.user.familyId },
-      select: { id: true, name: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    fetchFamilyMembers(session.user.familyId),
   ]);
 
   if (!sheet) {
     notFound();
   }
 
-  const metrics = computeSheetMetrics(sheet);
-  const distribution = computeIncomeDistribution(sheet);
-  const normalizedCharges = normalizeSheetCharges(sheet);
-  const defaultValues = toSheetFormValues(sheet);
-  const peopleOptions = buildPeopleOptions(members, session.user.id);
+  const decryptedSheet = decryptSheet(sheet);
+  const metrics = computeSheetMetrics(decryptedSheet);
+  const distribution = computeIncomeDistribution(decryptedSheet);
+  const normalizedCharges = normalizeSheetCharges(decryptedSheet);
+  const defaultValues = toSheetFormValues(decryptedSheet);
+  const peopleOptions = buildPeopleOptions(members, session.user.familyMemberId);
 
   const individualChargesMap = normalizedCharges.reduce<Map<string, number>>(
     (acc, charge) => {
@@ -96,22 +99,14 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
     });
   });
 
-  const totalBudgets = sheet.budgets.reduce(
-    (sum, budget) => sum + Number(budget.amount ?? 0),
+  const totalBudgets = decryptedSheet.budgets.reduce(
+    (sum, budget) => sum + budget.amount,
     0,
   );
 
   const memberLabels =
     members.length > 0
-      ? members.map((member, index) => {
-          const fallback = `Membre ${index + 1}`;
-          const raw = member.name?.trim();
-          if (!raw) {
-            return fallback;
-          }
-          const [first] = raw.split(/\s+/);
-          return first || fallback;
-        })
+      ? members.map((member) => member.displayName)
       : distribution.distribution.length > 0
         ? distribution.distribution.map((item) => item.person || "Membre")
         : [];

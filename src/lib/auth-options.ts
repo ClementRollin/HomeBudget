@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { ensureMemberForUser } from "@/lib/members";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -17,6 +18,7 @@ type AppUser = {
   familyId: string;
   familyName: string;
   familyInviteCode: string;
+  familyMemberId: string;
 };
 
 const authSecret =
@@ -61,6 +63,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const member = await ensureMemberForUser(
+          user.id,
+          user.familyId,
+          user.name ?? "Membre",
+        );
+
         return {
           id: user.id,
           email: user.email,
@@ -68,6 +76,7 @@ export const authOptions: NextAuthOptions = {
           familyId: user.familyId,
           familyName: user.family.name,
           familyInviteCode: user.family.inviteCode,
+          familyMemberId: member.id,
         };
       },
     }),
@@ -80,6 +89,7 @@ export const authOptions: NextAuthOptions = {
         token.familyId = authUser.familyId;
         token.familyName = authUser.familyName;
         token.familyInviteCode = authUser.familyInviteCode;
+        token.familyMemberId = authUser.familyMemberId;
       }
 
       return token;
@@ -90,6 +100,7 @@ export const authOptions: NextAuthOptions = {
         session.user.familyId = token.familyId as string;
         session.user.familyName = token.familyName as string;
         session.user.familyInviteCode = token.familyInviteCode as string;
+        session.user.familyMemberId = token.familyMemberId as string;
       }
 
       return session;

@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { ensureMemberForUser } from "@/lib/members";
 import { generateInviteCode, slugify } from "@/lib/utils";
 
 const baseFields = {
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
 
   const passwordHash = await hash(password, 10);
 
-  await prisma.user.create({
+  const newUser = await prisma.user.create({
     data: {
       name,
       email,
@@ -84,6 +85,8 @@ export async function POST(request: Request) {
       familyId: family.id,
     },
   });
+
+  await ensureMemberForUser(newUser.id, family.id, name);
 
   return NextResponse.json({
     success: true,

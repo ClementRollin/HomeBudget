@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import { formatCurrency } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { computeSheetMetrics, getMonthLabel } from "@/lib/sheets";
-import type { SheetWithRelations } from "@/lib/sheets";
+import { computeSheetMetrics, decryptSheet, getMonthLabel } from "@/lib/sheets";
+import type { SecureSheet } from "@/lib/sheets";
 import { getCurrentSession } from "@/lib/auth";
 
 const SheetsPage = async () => {
@@ -13,14 +13,20 @@ const SheetsPage = async () => {
     redirect("/");
   }
 
-  const sheets = (await prisma.sheet.findMany({
-    include: { salaries: true, charges: true, budgets: true },
+  const secureSheets = (await prisma.sheet.findMany({
+    include: {
+      salaries: { include: { member: true } },
+      charges: { include: { member: true } },
+      budgets: true,
+    },
     where: { familyId: session.user.familyId },
     orderBy: [
       { year: "desc" },
       { month: "desc" },
     ],
-  })) as SheetWithRelations[];
+  })) as SecureSheet[];
+
+  const sheets = secureSheets.map(decryptSheet);
 
   return (
     <div className="space-y-8">
