@@ -1,4 +1,4 @@
-import { compare } from "bcryptjs";
+﻿import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
@@ -19,7 +19,10 @@ type AppUser = {
   familyInviteCode: string;
 };
 
-const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV !== "production" ? "development-secret" : undefined);
 
 if (!authSecret) {
   throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas défini dans l'environnement.");
