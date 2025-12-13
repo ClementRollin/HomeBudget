@@ -46,3 +46,22 @@ export const buildPeopleOptions = (
     return first || fallback;
   });
 };
+
+export const buildMemberLabels = (
+  members: MinimalMember[],
+  fallback: string[] = [],
+) => {
+  if (!members.length) {
+    return fallback;
+  }
+
+  return members.map((member, index) => {
+    const defaultLabel = `Membre ${index + 1}`;
+    const raw = member.name?.trim();
+    if (!raw) {
+      return defaultLabel;
+    }
+    const [first] = raw.split(/\s+/);
+    return first || defaultLabel;
+  });
+};

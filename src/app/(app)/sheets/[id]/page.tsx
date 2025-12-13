@@ -6,6 +6,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import { prisma } from "@/lib/prisma";
 import {
   computeIncomeDistribution,
+  computeMemberBalances,
   computeSheetMetrics,
   getMonthLabel,
   normalizeSheetCharges,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/sheets";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { getCurrentSession } from "@/lib/auth";
-import { buildPeopleOptions } from "@/lib/utils";
+import { buildPeopleOptions, buildMemberLabels } from "@/lib/utils";
 
 const CHARGE_TYPE_LABELS = {
   FIXE_COMMUN: "Charges fixes communes",
@@ -51,73 +52,29 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
   const defaultValues = toSheetFormValues(sheet);
   const peopleOptions = buildPeopleOptions(members, session.user.id);
 
-  const individualChargesMap = normalizedCharges.reduce<Map<string, number>>(
-    (acc, charge) => {
-      if (charge.type === "FIXE_COMMUN") {
-        return acc;
-      }
-      if (!charge.person || charge.person === "Commun") {
-        return acc;
-      }
-      acc.set(charge.person, (acc.get(charge.person) ?? 0) + charge.amount);
-      return acc;
-    },
-    new Map(),
-  );
-
-  const peopleCards = distribution.distribution.map((item) => {
-    const individualCharges = individualChargesMap.get(item.person) ?? 0;
-    const totalCharges = individualCharges + item.fixedChargeShare;
-    return {
-      person: item.person,
-      income: item.amount,
-      percentage: item.percentage,
-      fixedShare: item.fixedChargeShare,
-      individualCharges,
-      totalCharges,
-      netAfterCharges: item.amount - totalCharges,
-    };
-  });
-
-  const extraPersons = Array.from(individualChargesMap.keys()).filter(
-    (person) => !peopleCards.some((card) => card.person === person),
-  );
-
-  extraPersons.forEach((person) => {
-    const individualCharges = individualChargesMap.get(person) ?? 0;
-    peopleCards.push({
-      person,
-      income: 0,
-      percentage: 0,
-      fixedShare: 0,
-      individualCharges,
-      totalCharges: individualCharges,
-      netAfterCharges: -individualCharges,
-    });
-  });
-
   const totalBudgets = sheet.budgets.reduce(
     (sum, budget) => sum + Number(budget.amount ?? 0),
     0,
   );
 
-  const memberLabels =
-    members.length > 0
-      ? members.map((member, index) => {
-          const fallback = `Membre ${index + 1}`;
-          const raw = member.name?.trim();
-          if (!raw) {
-            return fallback;
-          }
-          const [first] = raw.split(/\s+/);
-          return first || fallback;
-        })
-      : distribution.distribution.length > 0
-        ? distribution.distribution.map((item) => item.person || "Membre")
-        : [];
+  const memberLabels = buildMemberLabels(
+    members,
+    distribution.distribution.length > 0
+      ? distribution.distribution.map((item) => item.person || "Membre")
+      : [],
+  );
 
-  const budgetPerMember =
-    memberLabels.length > 0 ? totalBudgets / memberLabels.length : totalBudgets;
+  const { cards: memberCards, budgetPerMember } = computeMemberBalances({
+    normalizedCharges,
+    distribution,
+    totalBudgets,
+    memberLabels,
+  });
+
+  const budgetDisplayNames =
+    memberLabels.length > 0
+      ? memberLabels
+      : Array.from(new Set(memberCards.map((card) => card.person)));
 
   const INDIVIDUAL_TYPES: Array<typeof normalizedCharges[number]["type"]> = [
     "FIXE_INDIVIDUEL",
@@ -205,6 +162,29 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
             helper="Reparties selon les revenus"
           />
         </div>
+        {memberCards.length > 0 ? (
+          <div className="mt-6 rounded-3xl border border-white/5 bg-black/60 p-4">
+            <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Reste apres budgets</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {memberCards.map((card) => (
+                <div
+                  key={`top-${card.person}`}
+                  className="rounded-2xl border border-white/5 bg-white/[0.03] p-4"
+                >
+                  <p className="text-sm font-semibold text-white">{card.person}</p>
+                  <p
+                    className={`mt-2 text-2xl font-semibold ${
+                      card.netAfterBudgets >= 0 ? "text-emerald-300" : "text-rose-300"
+                    }`}
+                  >
+                    {formatCurrency(card.netAfterBudgets)}
+                  </p>
+                  <p className="text-xs text-slate-400">Disponible apres charges et budgets</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-3">
@@ -213,7 +193,7 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
             <div>
               <h2 className="text-xl font-semibold text-white">Repartition du foyer</h2>
               <p className="text-sm text-slate-400">
-                Chaque encart synthese revenus, charges et reste a vivre pour un membre.
+                Chaque encart resume revenus, charges et reste a vivre pour un membre.
               </p>
             </div>
             <div className="text-right">
@@ -223,13 +203,13 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
               </p>
             </div>
           </div>
-          {peopleCards.length === 0 ? (
+          {memberCards.length === 0 ? (
             <p className="text-sm text-slate-400">
               Ajoutez des salaires pour decouvrir la repartition automatique.
             </p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {peopleCards.map((card) => (
+              {memberCards.map((card) => (
                 <div
                   key={card.person}
                   className="rounded-2xl border border-white/5 bg-white/[0.04] p-5 text-sm"
@@ -258,6 +238,16 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
                         {formatCurrency(card.netAfterCharges)}
                       </span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span>Part budgets</span>
+                      <span>{formatCurrency(card.budgetShare)}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-white/5 pt-2 font-semibold text-white">
+                      <span>Reste apres budgets</span>
+                      <span className={card.netAfterBudgets >= 0 ? "text-emerald-300" : "text-rose-300"}>
+                        {formatCurrency(card.netAfterBudgets)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -272,12 +262,12 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
             </p>
           </div>
           <div className="space-y-3">
-            {memberLabels.length === 0 ? (
+            {budgetDisplayNames.length === 0 ? (
               <p className="text-sm text-slate-400">
                 Ajoutez des membres pour repartir automatiquement les budgets.
               </p>
             ) : (
-              memberLabels.map((label, index) => (
+              budgetDisplayNames.map((label, index) => (
                 <div
                   key={`${label}-${index}`}
                   className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3 text-sm text-slate-200"

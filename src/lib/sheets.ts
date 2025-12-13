@@ -22,6 +22,18 @@ export type NormalizedCharge = {
   amount: number;
 };
 
+export type MemberBalance = {
+  person: string;
+  income: number;
+  percentage: number;
+  fixedShare: number;
+  individualCharges: number;
+  totalCharges: number;
+  netAfterCharges: number;
+  budgetShare: number;
+  netAfterBudgets: number;
+};
+
 export const MONTH_NAMES = [
   "Janvier",
   "Février",
@@ -182,3 +194,108 @@ export const toSheetFormValues = (
     amount: decimalToNumber(budget.amount),
   })),
 });
+
+export const computeMemberBalances = ({
+  normalizedCharges,
+  distribution,
+  totalBudgets,
+  memberLabels,
+}: {
+  normalizedCharges: NormalizedCharge[];
+  distribution: ReturnType<typeof computeIncomeDistribution>;
+  totalBudgets: number;
+  memberLabels: string[];
+}): { cards: MemberBalance[]; budgetPerMember: number } => {
+  const individualChargesMap = normalizedCharges.reduce<Map<string, number>>((acc, charge) => {
+    if (charge.type === "FIXE_COMMUN") {
+      return acc;
+    }
+    if (!charge.person || charge.person === "Commun") {
+      return acc;
+    }
+    acc.set(charge.person, (acc.get(charge.person) ?? 0) + charge.amount);
+    return acc;
+  }, new Map());
+
+  const cards: MemberBalance[] = distribution.distribution.map((item) => {
+    const individualCharges = individualChargesMap.get(item.person) ?? 0;
+    const totalCharges = individualCharges + item.fixedChargeShare;
+    const netAfterCharges = item.amount - totalCharges;
+    return {
+      person: item.person,
+      income: item.amount,
+      percentage: item.percentage,
+      fixedShare: item.fixedChargeShare,
+      individualCharges,
+      totalCharges,
+      netAfterCharges,
+      budgetShare: 0,
+      netAfterBudgets: netAfterCharges,
+    };
+  });
+
+  individualChargesMap.forEach((amount, person) => {
+    if (!cards.some((card) => card.person === person)) {
+      const netAfterCharges = -amount;
+      cards.push({
+        person,
+        income: 0,
+        percentage: 0,
+        fixedShare: 0,
+        individualCharges: amount,
+        totalCharges: amount,
+        netAfterCharges,
+        budgetShare: 0,
+        netAfterBudgets: netAfterCharges,
+      });
+    }
+  });
+
+  const budgetNameList =
+    memberLabels.length > 0 ? memberLabels : cards.map((card) => card.person);
+  const uniqueBudgetNames = Array.from(new Set(budgetNameList.filter(Boolean)));
+  if (uniqueBudgetNames.length === 0 && totalBudgets > 0) {
+    uniqueBudgetNames.push("Foyer");
+  }
+
+  uniqueBudgetNames.forEach((name) => {
+    if (!cards.some((card) => card.person === name)) {
+      cards.push({
+        person: name,
+        income: 0,
+        percentage: 0,
+        fixedShare: 0,
+        individualCharges: 0,
+        totalCharges: 0,
+        netAfterCharges: 0,
+        budgetShare: 0,
+        netAfterBudgets: 0,
+      });
+    }
+  });
+
+  const budgetPerMember =
+    uniqueBudgetNames.length > 0 ? totalBudgets / uniqueBudgetNames.length : 0;
+  const eligibleForBudget = new Set(uniqueBudgetNames);
+
+  const enriched = cards
+    .map((card) => {
+      const budgetShare = eligibleForBudget.has(card.person) ? budgetPerMember : 0;
+      return {
+        ...card,
+        budgetShare,
+        netAfterBudgets: card.netAfterCharges - budgetShare,
+      };
+    })
+    .sort((a, b) => {
+      if (b.income !== a.income) {
+        return b.income - a.income;
+      }
+      return a.person.localeCompare(b.person);
+    });
+
+  return {
+    cards: enriched,
+    budgetPerMember,
+  };
+};
