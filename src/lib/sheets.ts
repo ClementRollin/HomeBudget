@@ -105,7 +105,7 @@ export const computeSheetMetrics = (sheet: SheetWithRelations) => {
     income,
     expenses,
     budgets,
-    balance: income - expenses,
+    balance: income - expenses - budgets,
   };
 };
 

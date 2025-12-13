@@ -104,14 +104,14 @@ const DashboardPage = async () => {
           />
           <StatCard
             label="Charges annuelles"
-            value={formatCurrency(yearMetrics.expenses)}
-            helper="Toutes categories"
+            value={formatCurrency(yearMetrics.expenses + yearMetrics.budgets)}
+            helper="Charges + budgets"
             variant="negative"
           />
           <StatCard
             label="Solde annuel"
             value={formatCurrency(yearMetrics.balance)}
-            helper="Revenus - charges"
+            helper="Revenus - charges - budgets"
             variant={yearMetrics.balance >= 0 ? "positive" : "negative"}
           />
         </div>
@@ -145,18 +145,13 @@ const DashboardPage = async () => {
               },
               {
                 label: "Charges prevues",
-                value: formatCurrency(currentMetrics.expenses),
-                helper: "Toutes categories",
-              },
-              {
-                label: "Budgets actifs",
-                value: formatCurrency(currentMetrics.budgets),
-                helper: `Enveloppes de ${monthLabel}`,
+                value: formatCurrency(currentMetrics.expenses + currentMetrics.budgets),
+                helper: "Charges + budgets",
               },
               {
                 label: "Solde previsionnel",
                 value: formatCurrency(currentMetrics.balance),
-                helper: currentMetrics.balance >= 0 ? "Excedent" : "Deficit",
+                helper: `${currentMetrics.balance >= 0 ? "Excedent" : "Deficit"} apres budgets`,
               }].map((card) => (
                 <div key={card.label} className="rounded-2xl border border-white/5 bg-white/4 p-4">
                   <p className="text-xs uppercase tracking-[0.25rem] text-slate-500">{card.label}</p>
