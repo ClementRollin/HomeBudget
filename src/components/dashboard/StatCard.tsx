@@ -14,7 +14,7 @@ const STAT_VARIANTS: Record<Exclude<StatCardProps["variant"], undefined>, string
 const StatCard = ({ label, value, helper, variant = "default" }: StatCardProps) => {
   return (
     <div
-      className={`rounded-2xl border border-white/5 bg-gradient-to-br p-6 ${STAT_VARIANTS[variant]}`}
+      className={`rounded-2xl border border-white/5 bg-linear-to-br p-6 ${STAT_VARIANTS[variant]}`}
     >
       <p className="text-sm uppercase tracking-widest text-slate-400">{label}</p>
       <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
