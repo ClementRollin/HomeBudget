@@ -31,7 +31,10 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = accountSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ message: "Donnees invalides" }, { status: 400, errors: parsed.error.flatten() });
+    return NextResponse.json(
+      { message: "Donnees invalides", errors: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   const { name, email, currentPassword, newPassword } = parsed.data;
