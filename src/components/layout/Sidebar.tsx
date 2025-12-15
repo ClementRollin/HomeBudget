@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import SignOutButton from "@/components/auth/SignOutButton";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -34,38 +35,41 @@ const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClos
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const sidebarContent = (
-    <>
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-widest text-slate-400">Projet</p>
-        <p className="text-2xl font-semibold text-white">HomeBudget</p>
-        <p className="text-slate-400">Gestion mensuelle partagée</p>
+const renderSidebarContent = () => (
+  <div className="flex h-full flex-col">
+    <div className="mb-8">
+      <p className="text-xs uppercase tracking-widest text-slate-400">Projet</p>
+      <p className="text-2xl font-semibold text-white">HomeBudget</p>
+      <p className="text-slate-400">Gestion mensuelle partagee</p>
+    </div>
+    <nav className="space-y-2 text-base font-medium">
+      {links.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          onClick={onClose}
+          className={cn(
+            "block rounded-xl px-4 py-2 hover:bg-white/10",
+            isActive(link.href) ? "bg-white/10 text-white" : "text-slate-400",
+          )}
+        >
+          {link.label}
+        </Link>
+      ))}
+    </nav>
+    <div className="mt-auto space-y-3 pt-6">
+      <div className="rounded-xl border border-dashed border-slate-700 p-4 text-xs text-slate-400">
+        Conseil : creez une fiche chaque 1er du mois pour garder le cap sur vos finances.
       </div>
-      <nav className="space-y-2 text-base font-medium">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            onClick={onClose}
-            className={cn(
-              "block rounded-xl px-4 py-2 hover:bg-white/10",
-              isActive(link.href) ? "bg-white/10 text-white" : "text-slate-400",
-            )}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="mt-auto rounded-xl border border-dashed border-slate-700 p-4 text-xs text-slate-400">
-        Conseil : créez une fiche chaque 1er du mois pour garder le cap sur vos finances.
-      </div>
-    </>
-  );
+      <SignOutButton />
+    </div>
+  </div>
+);
 
   return (
     <>
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex md:flex-col">
-        {sidebarContent}
+      <aside className="hidden h-screen w-64 shrink-0 border-r border-border bg-muted/40 p-6 text-sm md:flex">
+        {renderSidebarContent()}
       </aside>
       <button
         type="button"
@@ -95,7 +99,7 @@ const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClos
             </svg>
           </button>
         </div>
-        {sidebarContent}
+        {renderSidebarContent()}
       </aside>
     </>
   );

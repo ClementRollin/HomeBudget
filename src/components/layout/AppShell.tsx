@@ -10,11 +10,11 @@ const AppShell = ({ session, children }: { session: Session; children: ReactNode
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background text-white">
+    <div className="flex h-screen overflow-hidden bg-background text-white">
       <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="flex w-full flex-col">
         <Header session={session} onToggleSidebar={() => setMobileSidebarOpen(true)} />
-        <main className="flex-1 space-y-6 bg-gradient-to-br from-slate-950 via-slate-900 to-black p-6">
+        <main className="flex-1 overflow-y-auto space-y-6 bg-gradient-to-br from-slate-950 via-slate-900 to-black p-6">
           {children}
         </main>
       </div>

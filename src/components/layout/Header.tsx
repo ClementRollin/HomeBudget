@@ -1,8 +1,7 @@
-﻿"use client";
+"use client";
 
 import type { Session } from "next-auth";
 
-import SignOutButton from "@/components/auth/SignOutButton";
 import { getCurrentPeriod, getMonthLabel } from "@/lib/sheets";
 
 const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSidebar: () => void }) => {
@@ -16,11 +15,11 @@ const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSideba
       <div className="flex items-start justify-between gap-3 md:block">
         <div>
           <p className="text-sm uppercase tracking-[0.25rem] text-slate-400">
-            Bonjour {firstName} • {familyName}
+            Bonjour {firstName} - {familyName}
           </p>
           <h1 className="text-3xl font-semibold text-white">{getMonthLabel(month, year)}</h1>
           <p className="text-sm text-slate-400">
-            Planifiez, mesurez et ajustez vos finances du foyer en un coup d&apos;œil.
+            Planifiez, mesurez et ajustez vos finances du foyer en un coup d&apos;oeil.
           </p>
           {inviteCode ? (
             <p className="text-xs text-slate-500">
@@ -39,12 +38,9 @@ const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSideba
           </svg>
         </button>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-300 md:inline-flex">
-          Dashboard sécurisé
-        </span>
-        <SignOutButton />
-      </div>
+      <span className="hidden rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-slate-300 md:inline-flex">
+        Dashboard securise
+      </span>
     </header>
   );
 };
