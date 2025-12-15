@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+﻿import { NextResponse, type NextRequest } from "next/server";
 
-import { getCurrentSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireFamilySession } from "@/lib/tenant";
+import { sheetRepository } from "@/lib/repositories/sheets";
 import type { SheetWithRelations } from "@/lib/sheets";
 import { sheetFormSchema } from "@/lib/validations/sheet";
 
@@ -22,30 +22,28 @@ const serializeSheet = (sheet: SheetWithRelations) => ({
   })),
 });
 
-export async function GET() {
-  const session = await getCurrentSession();
+const resolveFamilySession = async () => {
+  try {
+    return await requireFamilySession();
+  } catch {
+    return null;
+  }
+};
 
-  if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+export async function GET() {
+  const familySession = await resolveFamilySession();
+  if (!familySession) {
+    return NextResponse.json({ message: "Non autorise" }, { status: 401 });
   }
 
-  const sheets = await prisma.sheet.findMany({
-    where: { familyId: session.user.familyId },
-    include: { salaries: true, charges: true, budgets: true },
-    orderBy: [
-      { year: "desc" },
-      { month: "desc" },
-    ],
-  });
-
+  const sheets = await sheetRepository.listAllWithDetails(familySession.familyId);
   return NextResponse.json(sheets.map(serializeSheet));
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  const familySession = await resolveFamilySession();
+  if (!familySession) {
+    return NextResponse.json({ message: "Non autorise" }, { status: 401 });
   }
 
   const body = await request.json();
@@ -55,23 +53,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Payload invalide" }, { status: 400 });
   }
 
-  const sheet = await prisma.sheet.create({
-    data: {
-      year: parsed.data.year,
-      month: parsed.data.month,
-      familyId: session.user.familyId,
-      ownerId: session.user.id,
-      salaries: { create: parsed.data.salaries },
-      charges: {
-        create: parsed.data.charges.map((charge) => ({
-          ...charge,
-          person: charge.person || null,
-        })),
-      },
-      budgets: { create: parsed.data.budgets },
-    },
-    include: { salaries: true, charges: true, budgets: true },
-  });
+  const sheet = await sheetRepository.createForFamily(
+    familySession.familyId,
+    familySession.userId,
+    parsed.data,
+  );
 
   return NextResponse.json({ id: sheet.id });
 }

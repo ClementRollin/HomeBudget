@@ -2,7 +2,8 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
+import { familyRepository } from "@/lib/repositories/families";
+import { userRepository } from "@/lib/repositories/users";
 import { generateInviteCode, slugify } from "@/lib/utils";
 
 const baseFields = {
@@ -36,9 +37,9 @@ export async function POST(request: Request) {
 
   const { mode, name, email, password, familyName, inviteCode } = parsed.data;
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+  const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
-    return NextResponse.json({ message: "Email déjà utilisé" }, { status: 409 });
+    return NextResponse.json({ message: "Email deja utilise" }, { status: 409 });
   }
 
   let family = null;
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     if (!inviteCode) {
       return NextResponse.json({ message: "Code famille requis" }, { status: 400 });
     }
-    family = await prisma.family.findUnique({ where: { inviteCode } });
+    family = await familyRepository.findByInviteCode(inviteCode);
     if (!family) {
       return NextResponse.json({ message: "Code famille invalide" }, { status: 404 });
     }
@@ -57,32 +58,27 @@ export async function POST(request: Request) {
     const baseSlug = slugify(familyName);
     let slug = baseSlug;
     let suffix = 1;
-    while (await prisma.family.findUnique({ where: { slug } })) {
+    while (await familyRepository.findBySlug(slug)) {
       slug = `${baseSlug}-${suffix++}`;
     }
     let invite = generateInviteCode();
-    while (await prisma.family.findUnique({ where: { inviteCode: invite } })) {
+    while (await familyRepository.findByInviteCode(invite)) {
       invite = generateInviteCode();
     }
 
-    family = await prisma.family.create({
-      data: {
-        name: familyName,
-        slug,
-        inviteCode: invite,
-      },
+    family = await familyRepository.createFamily({
+      name: familyName,
+      slug,
+      inviteCode: invite,
     });
   }
 
   const passwordHash = await hash(password, 10);
 
-  await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: passwordHash,
-      familyId: family.id,
-    },
+  await userRepository.createForFamily(family.id, {
+    name,
+    email,
+    password: passwordHash,
   });
 
   return NextResponse.json({

@@ -1,9 +1,8 @@
-﻿import { notFound, redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import SheetForm from "@/components/forms/SheetForm";
 import ChargesOverview from "@/components/sheets/ChargesOverview";
 import StatCard from "@/components/dashboard/StatCard";
-import { prisma } from "@/lib/prisma";
 import {
   computeIncomeDistribution,
   computeMemberBalances,
@@ -13,7 +12,9 @@ import {
   toSheetFormValues,
 } from "@/lib/sheets";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { getCurrentSession } from "@/lib/auth";
+import { requireFamilySession } from "@/lib/tenant";
+import { sheetRepository } from "@/lib/repositories/sheets";
+import { userRepository } from "@/lib/repositories/users";
 import { buildPeopleOptions, buildMemberLabels } from "@/lib/utils";
 
 const CHARGE_TYPE_LABELS = {
@@ -25,21 +26,15 @@ const CHARGE_TYPE_LABELS = {
 
 const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-  const session = await getCurrentSession();
-  if (!session?.user) {
+  const familyContext = await requireFamilySession().catch(() => null);
+  if (!familyContext) {
     redirect("/");
   }
+  const { userId, familyId } = familyContext;
 
   const [sheet, members] = await Promise.all([
-    prisma.sheet.findFirst({
-      where: { id, familyId: session.user.familyId },
-      include: { salaries: true, charges: true, budgets: true },
-    }),
-    prisma.user.findMany({
-      where: { familyId: session.user.familyId },
-      select: { id: true, name: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    sheetRepository.getById(familyId, id),
+    userRepository.listFamilyMembers(familyId),
   ]);
 
   if (!sheet) {
@@ -50,7 +45,7 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
   const distribution = computeIncomeDistribution(sheet);
   const normalizedCharges = normalizeSheetCharges(sheet);
   const defaultValues = toSheetFormValues(sheet);
-  const peopleOptions = buildPeopleOptions(members, session.user.id);
+  const peopleOptions = buildPeopleOptions(members, userId);
 
   const totalBudgets = sheet.budgets.reduce(
     (sum, budget) => sum + Number(budget.amount ?? 0),

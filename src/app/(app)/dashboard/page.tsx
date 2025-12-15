@@ -1,9 +1,7 @@
-﻿import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import StatCard from "@/components/dashboard/StatCard";
 import { formatCurrency } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
 import {
   aggregateSheetMetrics,
   computeIncomeDistribution,
@@ -13,46 +11,26 @@ import {
   getMonthLabel,
   normalizeSheetCharges,
 } from "@/lib/sheets";
-import { getCurrentSession } from "@/lib/auth";
+import { requireFamilySession } from "@/lib/tenant";
+import { sheetRepository } from "@/lib/repositories/sheets";
+import { userRepository } from "@/lib/repositories/users";
 import { buildMemberLabels } from "@/lib/utils";
 
 const DashboardPage = async () => {
-  const session = await getCurrentSession();
-  if (!session?.user) {
-    redirect("/");
-  }
-
+  const { session, familyId } = await requireFamilySession();
+  const user = session.user!;
   const period = getCurrentPeriod();
   const [currentSheet, history, yearSheets, members] = await Promise.all([
-    prisma.sheet.findFirst({
-      where: { month: period.month, year: period.year, familyId: session.user.familyId },
-      include: { salaries: true, charges: true, budgets: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.sheet.findMany({
-      include: { salaries: true, charges: true, budgets: true },
-      where: { familyId: session.user.familyId },
-      orderBy: [
-        { year: "desc" },
-        { month: "desc" },
-      ],
-      take: 5,
-    }),
-    prisma.sheet.findMany({
-      include: { salaries: true, charges: true, budgets: true },
-      where: { familyId: session.user.familyId, year: period.year },
-    }),
-    prisma.user.findMany({
-      where: { familyId: session.user.familyId },
-      select: { id: true, name: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    sheetRepository.findForMonth(familyId, { month: period.month, year: period.year }),
+    sheetRepository.listRecent(familyId),
+    sheetRepository.listForYear(familyId, period.year),
+    userRepository.listFamilyMembers(familyId),
   ]);
 
   const currentMetrics = currentSheet ? computeSheetMetrics(currentSheet) : null;
   const yearMetrics = aggregateSheetMetrics(yearSheets);
   const monthLabel = getMonthLabel(period.month, period.year);
-  const firstName = session.user.name?.split(/\s+/)[0] ?? session.user.familyName ?? "famille";
+  const firstName = user.name?.split(/\s+/)[0] ?? user.familyName ?? "famille";
 
   const currentMemberSnapshot = currentSheet
     ? (() => {

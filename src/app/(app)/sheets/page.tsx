@@ -1,26 +1,18 @@
-﻿import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { formatCurrency } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
 import { computeSheetMetrics, getMonthLabel } from "@/lib/sheets";
-import type { SheetWithRelations } from "@/lib/sheets";
-import { getCurrentSession } from "@/lib/auth";
+import { requireFamilySession } from "@/lib/tenant";
+import { sheetRepository } from "@/lib/repositories/sheets";
 
 const SheetsPage = async () => {
-  const session = await getCurrentSession();
-  if (!session?.user) {
+  const familyContext = await requireFamilySession().catch(() => null);
+  if (!familyContext) {
     redirect("/");
   }
 
-  const sheets = (await prisma.sheet.findMany({
-    include: { salaries: true, charges: true, budgets: true },
-    where: { familyId: session.user.familyId },
-    orderBy: [
-      { year: "desc" },
-      { month: "desc" },
-    ],
-  })) as SheetWithRelations[];
+  const sheets = await sheetRepository.listAllWithDetails(familyContext.familyId);
 
   return (
     <div className="space-y-8">
@@ -29,7 +21,7 @@ const SheetsPage = async () => {
           <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Historique</p>
           <h1 className="text-3xl font-semibold text-white">Fiches de compte mensuelles</h1>
           <p className="text-sm text-slate-400">
-            Retrouvez toutes les fiches de compte archivées, modifiez-les ou supprimez-les.
+            Consultez l&apos;ensemble des fiches enregistrees, modifiez-les ou supprimez-les.
           </p>
         </div>
         <Link
@@ -56,7 +48,7 @@ const SheetsPage = async () => {
             {sheets.length === 0 && (
               <tr>
                 <td className="px-6 py-8 text-center text-slate-400" colSpan={6}>
-                  Pas encore de fiches de compte créées.
+                  Pas encore de fiches enregistrees.
                 </td>
               </tr>
             )}

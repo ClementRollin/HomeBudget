@@ -1,9 +1,9 @@
-﻿import { compare } from "bcryptjs";
+import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -25,7 +25,7 @@ const authSecret =
   (process.env.NODE_ENV !== "production" ? "development-secret" : undefined);
 
 if (!authSecret) {
-  throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas défini dans l'environnement.");
+  throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas d�fini dans l'environnement.");
 }
 
 export const authOptions: NextAuthOptions = {
@@ -96,3 +96,4 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
