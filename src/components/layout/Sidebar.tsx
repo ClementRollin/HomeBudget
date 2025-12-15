@@ -37,12 +37,12 @@ const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClos
 
 const renderSidebarContent = () => (
   <div className="flex h-full flex-col">
-    <div className="mb-8">
-      <p className="text-xs uppercase tracking-widest text-slate-400">Projet</p>
-      <p className="text-2xl font-semibold text-white">HomeBudget</p>
-      <p className="text-slate-400">Gestion mensuelle partagee</p>
+    <div className="mb-6 text-sm">
+      <p className="text-[0.65rem] uppercase tracking-[0.4rem] text-slate-400">Projet</p>
+      <p className="text-xl font-semibold text-white">HomeBudget</p>
+      <p className="text-xs text-slate-400">Gestion mensuelle partagee</p>
     </div>
-    <nav className="space-y-2 text-base font-medium">
+    <nav className="flex-1 space-y-1 text-sm font-medium">
       {links.map((link) => (
         <Link
           key={link.href}
@@ -57,9 +57,9 @@ const renderSidebarContent = () => (
         </Link>
       ))}
     </nav>
-    <div className="mt-auto space-y-3 pt-6">
-      <div className="rounded-xl border border-dashed border-slate-700 p-4 text-xs text-slate-400">
-        Conseil : creez une fiche chaque 1er du mois pour garder le cap sur vos finances.
+    <div className="space-y-2 pt-4 text-xs">
+      <div className="rounded-xl border border-dashed border-slate-700 p-3 text-slate-400">
+        Conseil : creez une fiche chaque 1er du mois pour rester aligne.
       </div>
       <SignOutButton />
     </div>
@@ -82,11 +82,11 @@ const renderSidebarContent = () => (
       />
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 transform border-r border-border bg-muted/90 p-6 text-sm shadow-2xl transition-transform md:hidden",
+          "fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col border-r border-border bg-muted/90 p-6 text-sm shadow-2xl transition-transform md:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between">
           <p className="text-base font-semibold text-white">Navigation</p>
           <button
             type="button"

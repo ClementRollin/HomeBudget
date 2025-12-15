@@ -9,7 +9,7 @@ const AuthPage = () => {
         <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">HomeBudget</p>
         <h1 className="text-3xl font-semibold text-white">Connexion & Inscription</h1>
         <p className="text-sm text-slate-400">
-          Créez votre famille ou rejoignez-la grâce à son code d'invitation.
+          Créez votre famille ou rejoignez-la grâce à son code d&apos;invitation.
         </p>
       </div>
       <Suspense fallback={<p className="text-sm text-slate-400">Chargement...</p>}>
