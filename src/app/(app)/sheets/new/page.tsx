@@ -4,6 +4,20 @@ import SheetForm from "@/components/forms/SheetForm";
 import { requireFamilySession } from "@/lib/tenant";
 import { userRepository } from "@/lib/repositories/users";
 import { buildPeopleOptions } from "@/lib/utils";
+import { sheetRepository } from "@/lib/repositories/sheets";
+import { defaultSheetFormValues } from "@/lib/validations/sheet";
+import { getCurrentPeriod } from "@/lib/sheets";
+
+const getSuggestedPeriod = async (familyId: string) => {
+  const { month, year } = getCurrentPeriod();
+  const currentSheet = await sheetRepository.findForMonth(familyId, { month, year });
+  if (!currentSheet) {
+    return { month, year };
+  }
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  return { month: nextMonth, year: nextYear };
+};
 
 const NewSheetPage = async () => {
   const familyContext = await requireFamilySession().catch(() => null);
@@ -11,6 +25,8 @@ const NewSheetPage = async () => {
     redirect("/");
   }
 
+  const suggestedPeriod = await getSuggestedPeriod(familyContext.familyId);
+  const initialValues = { ...defaultSheetFormValues(), ...suggestedPeriod };
   const members = await userRepository.listFamilyMembers(familyContext.familyId);
   const peopleOptions = buildPeopleOptions(members, familyContext.userId);
 
@@ -23,7 +39,7 @@ const NewSheetPage = async () => {
           Renseignez salaires, charges et budgets pour anticiper votre tresorerie.
         </p>
       </div>
-      <SheetForm peopleOptions={peopleOptions} />
+      <SheetForm peopleOptions={peopleOptions} initialValues={initialValues} lockPeriod />
     </div>
   );
 };

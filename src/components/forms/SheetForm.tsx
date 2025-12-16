@@ -26,9 +26,10 @@ interface SheetFormProps {
   sheetId?: string;
   initialValues?: SheetFormValues;
   peopleOptions?: string[];
+  lockPeriod?: boolean;
 }
 
-const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) => {
+const SheetForm = ({ sheetId, initialValues, peopleOptions, lockPeriod }: SheetFormProps) => {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -71,6 +72,8 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
   const watchedCharges = useWatch({ control: form.control, name: "charges" });
   const watchedSalaries = useWatch({ control: form.control, name: "salaries" });
+  const watchedYear = useWatch({ control: form.control, name: "year" });
+  const watchedMonth = useWatch({ control: form.control, name: "month" });
 
   const salaryStats = useMemo(() => {
     const totals = new Map<string, number>();
@@ -125,7 +128,13 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10 rounded-3xl border border-white/5 bg-muted/30 p-8">
-      <SheetPeriodFields register={form.register} errors={errors} />
+      <SheetPeriodFields
+        register={form.register}
+        errors={errors}
+        lockPeriod={lockPeriod}
+        currentYear={watchedYear}
+        currentMonth={watchedMonth}
+      />
       <SalaryFields
         fields={salaryFields}
         append={appendSalary}

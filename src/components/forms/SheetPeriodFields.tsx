@@ -1,4 +1,4 @@
-﻿import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 import type { SheetFormValues } from "@/lib/validations/sheet";
 
@@ -26,14 +26,30 @@ const YEAR_OPTIONS = Array.from({ length: 8 }, (_, index) => {
 interface SheetPeriodFieldsProps {
   register: UseFormRegister<SheetFormValues>;
   errors: FieldErrors<SheetFormValues>;
+  lockPeriod?: boolean;
+  currentYear?: number;
+  currentMonth?: number;
 }
 
-const SheetPeriodFields = ({ register, errors }: SheetPeriodFieldsProps) => (
-  <section className="grid gap-6 md:grid-cols-2">
-    <div>
-      <label htmlFor="year" className="text-sm text-slate-400">
-        Année
-      </label>
+const SheetPeriodFields = ({
+  register,
+  errors,
+  lockPeriod,
+  currentYear,
+  currentMonth,
+}: SheetPeriodFieldsProps) => {
+  const lockedYear = currentYear ?? CURRENT_YEAR;
+  const lockedMonth = currentMonth ?? new Date().getMonth() + 1;
+
+  const renderYearField = () =>
+    lockPeriod ? (
+      <>
+        <input type="hidden" value={lockedYear} {...register("year", { valueAsNumber: true })} />
+        <div className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-slate-200 cursor-not-allowed">
+          {lockedYear}
+        </div>
+      </>
+    ) : (
       <select
         id="year"
         {...register("year", { valueAsNumber: true })}
@@ -45,12 +61,17 @@ const SheetPeriodFields = ({ register, errors }: SheetPeriodFieldsProps) => (
           </option>
         ))}
       </select>
-      {errors.year && <p className="mt-1 text-xs text-rose-400">{errors.year.message}</p>}
-    </div>
-    <div>
-      <label htmlFor="month" className="text-sm text-slate-400">
-        Mois
-      </label>
+    );
+
+  const renderMonthField = () =>
+    lockPeriod ? (
+      <>
+        <input type="hidden" value={lockedMonth} {...register("month", { valueAsNumber: true })} />
+        <div className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-slate-200 cursor-not-allowed">
+          {MONTH_OPTIONS.find((option) => option.value === lockedMonth)?.label ?? lockedMonth}
+        </div>
+      </>
+    ) : (
       <select
         id="month"
         {...register("month", { valueAsNumber: true })}
@@ -62,9 +83,31 @@ const SheetPeriodFields = ({ register, errors }: SheetPeriodFieldsProps) => (
           </option>
         ))}
       </select>
-      {errors.month && <p className="mt-1 text-xs text-rose-400">{errors.month.message}</p>}
-    </div>
-  </section>
-);
+    );
+
+  return (
+    <section className="grid gap-6 md:grid-cols-2">
+      {lockPeriod ? (
+        <div className="md:col-span-2 -mb-2 text-xs text-slate-500">
+          Période définie automatiquement (ajustée au mois courant ou suivant).
+        </div>
+      ) : null}
+      <div>
+        <label htmlFor="year" className="text-sm text-slate-400">
+          Année
+        </label>
+        {renderYearField()}
+        {errors.year && <p className="mt-1 text-xs text-rose-400">{errors.year.message}</p>}
+      </div>
+      <div>
+        <label htmlFor="month" className="text-sm text-slate-400">
+          Mois
+        </label>
+        {renderMonthField()}
+        {errors.month && <p className="mt-1 text-xs text-rose-400">{errors.month.message}</p>}
+      </div>
+    </section>
+  );
+};
 
 export default SheetPeriodFields;
