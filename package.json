@@ -13,7 +13,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "postinstall": "npm run prisma:generate"
+    "postinstall": "npm run prisma:generate",
+    "scripts:backfill:invitations": "node scripts/backfill-invitations.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

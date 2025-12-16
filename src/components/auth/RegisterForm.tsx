@@ -84,8 +84,8 @@ const RegisterForm = () => {
     const payload = await response.json();
     setServerMessage(
       payload?.familyInviteCode
-        ? `Famille créée. Partagez le code ${payload.familyInviteCode} pour inviter vos proches.`
-        : "Compte créé. Connexion en cours...",
+        ? `Famille cree. Partagez le code ${payload.familyInviteCode} (usage unique) pour inviter vos proches.`
+        : "Compte cree. Connexion en cours...",
     );
 
     const authResponse = await signIn("credentials", {

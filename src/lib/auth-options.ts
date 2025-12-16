@@ -1,4 +1,4 @@
-import { compare } from "bcryptjs";
+ï»¿import { compare } from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
@@ -25,7 +25,7 @@ const authSecret =
   (process.env.NODE_ENV !== "production" ? "development-secret" : undefined);
 
 if (!authSecret) {
-  throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas défini dans l'environnement.");
+  throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) n'est pas defini dans l'environnement.");
 }
 
 export const authOptions: NextAuthOptions = {
@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
           familyId: user.familyId,
           familyName: user.family.name,
           familyInviteCode: user.family.inviteCode,
-        };
+        } satisfies AppUser;
       },
     }),
   ],
@@ -96,4 +96,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
-

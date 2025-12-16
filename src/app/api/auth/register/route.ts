@@ -4,7 +4,9 @@ import { z } from "zod";
 
 import { familyRepository } from "@/lib/repositories/families";
 import { userRepository } from "@/lib/repositories/users";
+import { invitationRepository } from "@/lib/repositories/invitations";
 import { generateInviteCode, slugify } from "@/lib/utils";
+import { getInvitationExpirationDate } from "@/lib/invitations";
 
 const baseFields = {
   name: z.string().min(2),
@@ -43,11 +45,19 @@ export async function POST(request: Request) {
   }
 
   let family = null;
+  let invitationRecord: Awaited<
+    ReturnType<typeof invitationRepository.findValidByCode>
+  > | null = null;
   if (mode === "join") {
     if (!inviteCode) {
       return NextResponse.json({ message: "Code famille requis" }, { status: 400 });
     }
-    family = await familyRepository.findByInviteCode(inviteCode);
+    invitationRecord = await invitationRepository.findValidByCode(inviteCode);
+    if (invitationRecord?.family) {
+      family = invitationRecord.family;
+    } else {
+      family = await familyRepository.findByInviteCode(inviteCode);
+    }
     if (!family) {
       return NextResponse.json({ message: "Code famille invalide" }, { status: 404 });
     }
@@ -71,15 +81,30 @@ export async function POST(request: Request) {
       slug,
       inviteCode: invite,
     });
+
+    await invitationRepository.createForFamily({
+      familyId: family.id,
+      rawCode: invite,
+      expiresAt: getInvitationExpirationDate(),
+    });
   }
 
   const passwordHash = await hash(password, 10);
 
-  await userRepository.createForFamily(family.id, {
-    name,
-    email,
-    password: passwordHash,
-  });
+  if (invitationRecord) {
+    await invitationRepository.fulfillInvitation(invitationRecord.id, {
+      name,
+      email,
+      password: passwordHash,
+      family: { connect: { id: family.id } },
+    });
+  } else {
+    await userRepository.createForFamily(family.id, {
+      name,
+      email,
+      password: passwordHash,
+    });
+  }
 
   return NextResponse.json({
     success: true,

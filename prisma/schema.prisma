@@ -15,6 +15,7 @@ model Family {
   createdAt  DateTime @default(now())
   users      User[]
   sheets     Sheet[]
+  invitations Invitation[]
 }
 
 model User {
@@ -68,4 +69,20 @@ model Budget {
   sheetId  String
   label    String
   amount   Decimal @db.Decimal(10, 2)
+}
+
+model Invitation {
+  id              String   @id @default(cuid())
+  family          Family   @relation(fields: [familyId], references: [id])
+  familyId        String
+  codeHash        String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime?
+  usedAt          DateTime?
+  usedByUserId    String?
+  createdByUserId String?
+  attempts        Int      @default(0)
+
+  @@index([familyId])
+  @@unique([familyId, codeHash])
 }

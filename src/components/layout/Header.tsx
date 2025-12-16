@@ -8,7 +8,6 @@ const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSideba
   const { month, year } = getCurrentPeriod();
   const firstName = session?.user?.name?.split(" ")[0] ?? "HomeBudget";
   const familyName = session?.user?.familyName ?? "Famille";
-  const inviteCode = session?.user?.familyInviteCode;
 
   return (
     <header className="flex flex-col gap-4 border-b border-border bg-background/80 px-4 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
@@ -21,11 +20,6 @@ const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSideba
           <p className="text-sm text-slate-400">
             Planifiez, mesurez et ajustez vos finances du foyer en un coup d&apos;oeil.
           </p>
-          {inviteCode ? (
-            <p className="text-xs text-slate-500">
-              Code famille : <span className="font-semibold text-slate-200">{inviteCode}</span>
-            </p>
-          ) : null}
         </div>
         <button
           type="button"

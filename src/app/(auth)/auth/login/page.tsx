@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 
 import AuthSwitcher from "@/components/auth/AuthSwitcher";
 
@@ -7,16 +7,16 @@ const AuthPage = () => {
     <div className="space-y-8 text-center">
       <div>
         <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">HomeBudget</p>
-        <h1 className="text-3xl font-semibold text-white">Connexion & Inscription</h1>
+        <h1 className="text-3xl font-semibold text-white">Connexion &amp; Inscription</h1>
         <p className="text-sm text-slate-400">
-          Créez votre famille ou rejoignez-la grâce à son code d&apos;invitation.
+          Creez votre famille ou rejoignez-la grace a son code d&apos;invitation.
         </p>
       </div>
       <Suspense fallback={<p className="text-sm text-slate-400">Chargement...</p>}>
         <AuthSwitcher />
       </Suspense>
       <p className="text-xs text-slate-500">
-        Une fois connecté, vous accéderez à un espace partagé par famille.
+        Une fois connecte, vous accederez a un espace partage par famille.
       </p>
     </div>
   );

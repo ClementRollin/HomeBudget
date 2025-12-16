@@ -19,4 +19,10 @@ export const familyRepository = {
         inviteCode: params.inviteCode,
       },
     }),
+
+  updateInviteCode: (familyId: string, inviteCode: string) =>
+    prisma.family.update({
+      where: { id: familyId },
+      data: { inviteCode },
+    }),
 };

@@ -10,8 +10,8 @@ export const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "") || "famille";
 
-export const generateInviteCode = () =>
-  Math.random().toString(36).replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase();
+export const generateInviteCode = (length = 8) =>
+  Math.random().toString(36).replace(/[^a-z0-9]/gi, "").slice(0, length).toUpperCase();
 
 type MinimalMember = { id: string; name: string | null };
 
