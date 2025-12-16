@@ -214,9 +214,9 @@ const DashboardPage = async () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400">Charges</p>
+                      <p className="text-xs text-slate-400">Charges + Budgets</p>
                       <p className="font-semibold text-rose-300">
-                        {formatCurrency(sheetMetrics.expenses)}
+                        {formatCurrency(sheetMetrics.expenses + sheetMetrics.budgets)}
                       </p>
                     </div>
                   </div>
