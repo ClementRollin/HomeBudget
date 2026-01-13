@@ -1,6 +1,6 @@
 ﻿<div align="center">
 
-![HomeBudget](./public/vercel.svg)
+![HomeBudget](./public/logo.png)
 
 # HomeBudget
 
