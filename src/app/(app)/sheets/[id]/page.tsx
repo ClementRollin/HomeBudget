@@ -7,7 +7,9 @@ import {
   computeIncomeDistribution,
   computeMemberBalances,
   computeSheetMetrics,
+  getCurrentPeriod,
   getMonthLabel,
+  isPastPeriod,
   normalizeSheetCharges,
   toSheetFormValues,
 } from "@/lib/sheets";
@@ -42,6 +44,8 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
   }
 
   const metrics = computeSheetMetrics(sheet);
+  const currentPeriod = getCurrentPeriod();
+  const isReadOnly = isPastPeriod(sheet.year, sheet.month, currentPeriod);
   const distribution = computeIncomeDistribution(sheet);
   const normalizedCharges = normalizeSheetCharges(sheet);
   const defaultValues = toSheetFormValues(sheet);
@@ -125,6 +129,11 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
             <p className="text-sm text-slate-400">
               {sheet.salaries.length} salaires - {sheet.charges.length} charges - {sheet.budgets.length} budgets
             </p>
+            {isReadOnly ? (
+              <p className="mt-2 text-xs uppercase tracking-[0.25rem] text-rose-300">
+                Fiche verrouillee (mois termine)
+              </p>
+            ) : null}
           </div>
           <div className="text-right">
             <p className="text-xs uppercase tracking-[0.25rem] text-slate-500">Solde actuel</p>
@@ -334,19 +343,21 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
         </div>
       </section>
 
-      <section className="space-y-6 rounded-3xl border border-white/5 bg-black/30 p-6">
-        <div>
-          <h2 className="text-xl font-semibold text-white">Mettre a jour la fiche</h2>
-          <p className="text-sm text-slate-400">
-            Ajoutez de nouvelles entrees ou ajustez les montants avant de synchroniser vos donnees.
-          </p>
-        </div>
-        <SheetForm
-          sheetId={sheet.id}
-          initialValues={defaultValues}
-          peopleOptions={peopleOptions}
-        />
-      </section>
+      {isReadOnly ? null : (
+        <section className="space-y-6 rounded-3xl border border-white/5 bg-black/30 p-6">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Mettre a jour la fiche</h2>
+            <p className="text-sm text-slate-400">
+              Ajoutez de nouvelles entrees ou ajustez les montants avant de synchroniser vos donnees.
+            </p>
+          </div>
+          <SheetForm
+            sheetId={sheet.id}
+            initialValues={defaultValues}
+            peopleOptions={peopleOptions}
+          />
+        </section>
+      )}
     </div>
   );
 };

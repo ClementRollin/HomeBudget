@@ -54,6 +54,20 @@ export const getCurrentPeriod = () => {
   return { year: now.getFullYear(), month: now.getMonth() + 1 };
 };
 
+export const isPastPeriod = (
+  year: number,
+  month: number,
+  reference = getCurrentPeriod(),
+) => {
+  if (year < reference.year) {
+    return true;
+  }
+  if (year > reference.year) {
+    return false;
+  }
+  return month < reference.month;
+};
+
 export const getMonthLabel = (month: number, year?: number) => {
   const label = MONTH_NAMES[month - 1] ?? "Mois";
   return year ? `${label} ${year}` : label;
