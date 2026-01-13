@@ -42,9 +42,9 @@ const renderSidebarContent = () => (
       <Image
         src="/logo.png"
         alt="HomeBudget"
-        width={72}
-        height={72}
-        className="h-18 w-18 rounded-2xl bg-black/30"
+        width={240}
+        height={160}
+        className="h-auto w-40 rounded-2xl bg-black/30"
         priority
       />
       <p className="mt-3 text-xs text-slate-400">Gestion mensuelle partagee</p>
