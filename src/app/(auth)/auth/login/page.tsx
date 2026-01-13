@@ -11,9 +11,9 @@ const AuthPage = () => {
           <Image
             src="/logo.png"
             alt="HomeBudget"
-            width={120}
-            height={120}
-            className="h-24 w-24 rounded-3xl border border-white/10 bg-black/30"
+            width={240}
+            height={160}
+            className="w-48 h-auto rounded-3xl border border-white/10 bg-black/30"
             priority
           />
         </div>
