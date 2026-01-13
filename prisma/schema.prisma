@@ -50,6 +50,7 @@ model Salary {
   sheetId  String
   person   String
   label    String
+  category String  @default("Salaire")
   amount   Decimal @db.Decimal(10, 2)
 }
 
@@ -60,6 +61,7 @@ model Charge {
   type     String
   person   String?
   label    String
+  category String  @default("Autres")
   amount   Decimal @db.Decimal(10, 2)
 }
 

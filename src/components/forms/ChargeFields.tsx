@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   type FieldArrayWithId,
   type UseFieldArrayAppend,
@@ -7,7 +7,12 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 
-import { CHARGE_TYPES, type SheetFormValues } from "@/lib/validations/sheet";
+import {
+  CHARGE_CATEGORIES,
+  CHARGE_TYPES,
+  DEFAULT_CHARGE_CATEGORY,
+  type SheetFormValues,
+} from "@/lib/validations/sheet";
 
 interface SalaryStats {
   totals: Map<string, number>;
@@ -99,7 +104,7 @@ const ChargeFields = ({
         : null;
 
     return (
-      <div key={item.id} className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-5">
+      <div key={item.id} className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-6">
         <select
           {...register(`charges.${item.index}.type` as const)}
           className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm uppercase tracking-wide text-white"
@@ -115,7 +120,7 @@ const ChargeFields = ({
           disabled={!isIndividual}
           className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <option value="">{isIndividual ? "Sélectionner" : "Charge commune"}</option>
+          <option value="">{isIndividual ? "S‚lectionner" : "Charge commune"}</option>
           {people.map((person) => (
             <option key={person} value={person}>
               {person}
@@ -123,7 +128,13 @@ const ChargeFields = ({
           ))}
         </select>
         <input
-          placeholder="Libellé"
+          list="charge-category-options"
+          placeholder="Categorie"
+          {...register(`charges.${item.index}.category` as const)}
+          className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+        />
+        <input
+          placeholder="Libell‚"
           {...register(`charges.${item.index}.label` as const)}
           className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
         />
@@ -172,7 +183,7 @@ const ChargeFields = ({
     <section className="space-y-4">
       <div>
         <h3 className="text-xl font-semibold text-white">Charges</h3>
-        <p className="text-sm text-slate-400">Déclarez toutes les dépenses prévues</p>
+        <p className="text-sm text-slate-400">D‚clarez toutes les d‚penses pr‚vues</p>
       </div>
       <div className="space-y-6">
         {(["FIXE_COMMUN", "EXCEPTIONNEL_COMMUN"] as const).map((type) => (
@@ -200,9 +211,22 @@ const ChargeFields = ({
           </div>
         ))}
       </div>
+      <datalist id="charge-category-options">
+        {CHARGE_CATEGORIES.map((category) => (
+          <option key={category} value={category} />
+        ))}
+      </datalist>
       <button
         type="button"
-        onClick={() => append({ type: CHARGE_TYPES[0], person: "", label: "", amount: 0 })}
+        onClick={() =>
+          append({
+            type: CHARGE_TYPES[0],
+            person: "",
+            category: DEFAULT_CHARGE_CATEGORY,
+            label: "",
+            amount: 0,
+          })
+        }
         className="rounded-2xl border border-dashed border-white/10 px-4 py-2 text-sm text-slate-300"
       >
         Ajouter une charge

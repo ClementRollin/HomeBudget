@@ -3,49 +3,41 @@
 import { useMemo, useState } from "react";
 
 import { formatCurrency } from "@/lib/format";
-import { CHARGE_TYPES } from "@/lib/validations/sheet";
+import { DEFAULT_CHARGE_CATEGORY } from "@/lib/validations/sheet";
 
 export type ChargeFilterItem = {
   id: string;
-  type: (typeof CHARGE_TYPES)[number];
+  category: string;
   person: string;
   label: string;
   amount: number;
 };
 
-const FILTERS = ["TOUTES", ...CHARGE_TYPES] as const;
+type FilterValue = "TOUTES" | string;
 
-const TYPE_LABELS: Record<(typeof CHARGE_TYPES)[number], string> = {
-  FIXE_COMMUN: "Fixes communes",
-  FIXE_INDIVIDUEL: "Fixes individuelles",
-  EXCEPTIONNEL_COMMUN: "Exceptionnelles communes",
-  EXCEPTIONNEL_INDIVIDUEL: "Exceptionnelles individuelles",
-};
+const ChargesOverview = ({ charges }: { charges: ChargeFilterItem[] }) => {
+  const categories = useMemo(() => {
+    const unique = new Set<string>();
+    charges.forEach((charge) => {
+      unique.add(charge.category || DEFAULT_CHARGE_CATEGORY);
+    });
+    return Array.from(unique);
+  }, [charges]);
 
-const FILTER_LABELS: Record<(typeof FILTERS)[number], string> = {
-  TOUTES: "Toutes",
-  ...TYPE_LABELS,
-};
-
-type Props = {
-  charges: ChargeFilterItem[];
-};
-
-const ChargesOverview = ({ charges }: Props) => {
-  const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]>("TOUTES");
+  const [activeFilter, setActiveFilter] = useState<FilterValue>("TOUTES");
 
   const filteredCharges = useMemo(
     () =>
       activeFilter === "TOUTES"
         ? charges
-        : charges.filter((charge) => charge.type === activeFilter),
+        : charges.filter((charge) => (charge.category || DEFAULT_CHARGE_CATEGORY) === activeFilter),
     [activeFilter, charges],
   );
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {FILTERS.map((filter) => (
+        {["TOUTES", ...categories].map((filter) => (
           <button
             key={filter}
             type="button"
@@ -56,14 +48,14 @@ const ChargesOverview = ({ charges }: Props) => {
                 : "border-white/10 text-slate-400 hover:border-accent/40"
             }`}
           >
-            {FILTER_LABELS[filter]}
+            {filter === "TOUTES" ? "Toutes" : filter}
           </button>
         ))}
       </div>
       <div className="space-y-3">
         {filteredCharges.length === 0 ? (
           <p className="text-sm text-slate-400">
-            Aucune charge dans cette catégorie pour le moment.
+            Aucune charge dans cette categorie pour le moment.
           </p>
         ) : (
           filteredCharges.map((charge) => (
@@ -74,7 +66,7 @@ const ChargesOverview = ({ charges }: Props) => {
               <div>
                 <p className="text-sm font-semibold text-white">{charge.label}</p>
                 <p className="text-xs text-slate-400">
-                  {TYPE_LABELS[charge.type]} · {charge.person}
+                  {(charge.category || DEFAULT_CHARGE_CATEGORY) + " · " + charge.person}
                 </p>
               </div>
               <p className="text-sm font-semibold text-white">

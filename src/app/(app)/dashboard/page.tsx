@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import CategoryBreakdown from "@/components/dashboard/CategoryBreakdown";
 import StatCard from "@/components/dashboard/StatCard";
 import { formatCurrency } from "@/lib/format";
 import {
@@ -15,6 +16,7 @@ import { requireFamilySession } from "@/lib/tenant";
 import { sheetRepository } from "@/lib/repositories/sheets";
 import { userRepository } from "@/lib/repositories/users";
 import { buildMemberLabels } from "@/lib/utils";
+import { DEFAULT_CHARGE_CATEGORY, DEFAULT_INCOME_CATEGORY } from "@/lib/validations/sheet";
 
 const DashboardPage = async () => {
   const { session, familyId } = await requireFamilySession();
@@ -52,6 +54,45 @@ const DashboardPage = async () => {
         });
       })()
     : null;
+
+  const buildCategoryTotals = <T,>(
+    items: T[],
+    getCategory: (item: T) => string,
+    getAmount: (item: T) => number,
+  ) => {
+    const map = new Map<string, number>();
+    items.forEach((item) => {
+      const category = getCategory(item);
+      const amount = getAmount(item);
+      map.set(category, (map.get(category) ?? 0) + amount);
+    });
+    return Array.from(map.entries()).map(([label, amount]) => ({ label, amount }));
+  };
+
+  const incomeCategories = currentSheet
+    ? buildCategoryTotals(
+        currentSheet.salaries,
+        (salary) => salary.category ?? DEFAULT_INCOME_CATEGORY,
+        (salary) => Number(salary.amount ?? 0),
+      )
+    : [];
+
+  const expenseCategories = currentSheet
+    ? buildCategoryTotals(
+        [
+          ...currentSheet.charges.map((charge) => ({
+            category: charge.category ?? DEFAULT_CHARGE_CATEGORY,
+            amount: Number(charge.amount ?? 0),
+          })),
+          ...currentSheet.budgets.map((budget) => ({
+            category: "Budgets",
+            amount: Number(budget.amount ?? 0),
+          })),
+        ],
+        (entry) => entry.category,
+        (entry) => entry.amount,
+      )
+    : [];
 
   return (
     <div className="space-y-10">
@@ -169,6 +210,23 @@ const DashboardPage = async () => {
             Creez une nouvelle fiche pour le mois en cours afin de suivre vos salaires, charges et budgets en temps reel.
           </div>
         )}
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <CategoryBreakdown
+          title="Revenus par categorie"
+          subtitle="Repartition des credits du mois en cours."
+          emptyLabel="Aucun revenu categorise pour le moment."
+          items={incomeCategories}
+          variant="positive"
+        />
+        <CategoryBreakdown
+          title="Depenses par categorie"
+          subtitle="Charges et budgets regroupes par categorie."
+          emptyLabel="Aucune depense categorisee pour le moment."
+          items={expenseCategories}
+          variant="negative"
+        />
       </section>
 
       <section className="rounded-3xl border border-white/5 bg-black/30 p-6">

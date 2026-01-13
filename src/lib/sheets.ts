@@ -1,5 +1,10 @@
 ﻿import type { Budget, Charge, Salary, Sheet } from "@prisma/client";
-import { CHARGE_TYPES, type SheetFormValues } from "@/lib/validations/sheet";
+import {
+  CHARGE_TYPES,
+  DEFAULT_CHARGE_CATEGORY,
+  DEFAULT_INCOME_CATEGORY,
+  type SheetFormValues,
+} from "@/lib/validations/sheet";
 
 export type SheetWithRelations = Sheet & {
   salaries: Salary[];
@@ -18,6 +23,7 @@ export type NormalizedCharge = {
   id: string;
   type: (typeof CHARGE_TYPES)[number];
   person: string;
+  category: string;
   label: string;
   amount: number;
 };
@@ -183,6 +189,7 @@ export const normalizeSheetCharges = (
     id: charge.id,
     type: normalizeChargeType(charge.type),
     person: normalizePersonLabel(charge.person) || "Commun",
+    category: charge.category ?? DEFAULT_CHARGE_CATEGORY,
     label: charge.label,
     amount: decimalToNumber(charge.amount),
   }));
@@ -194,12 +201,14 @@ export const toSheetFormValues = (
   month: sheet.month,
   salaries: sheet.salaries.map((salary: Salary) => ({
     person: normalizePersonLabel(salary.person),
+    category: salary.category ?? DEFAULT_INCOME_CATEGORY,
     label: salary.label,
     amount: decimalToNumber(salary.amount),
   })),
   charges: sheet.charges.map((charge: Charge) => ({
     type: normalizeChargeType(charge.type),
     person: charge.person ?? "",
+    category: charge.category ?? DEFAULT_CHARGE_CATEGORY,
     label: charge.label,
     amount: decimalToNumber(charge.amount),
   })),

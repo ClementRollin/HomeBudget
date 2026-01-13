@@ -9,21 +9,40 @@ export const CHARGE_TYPES = [
   "EXCEPTIONNEL_INDIVIDUEL",
 ] as const;
 
+export const INCOME_CATEGORIES = ["Salaire", "Prime", "Aides", "Autres"] as const;
+export const CHARGE_CATEGORIES = [
+  "Fixes",
+  "Exceptionnelles",
+  "Logement",
+  "Alimentation",
+  "Transport",
+  "Sante",
+  "Assurances",
+  "Impots",
+  "Loisirs",
+  "Autres",
+] as const;
+
+export const DEFAULT_INCOME_CATEGORY = INCOME_CATEGORIES[0];
+export const DEFAULT_CHARGE_CATEGORY = CHARGE_CATEGORIES[0];
+
 export const salarySchema = z.object({
   person: z.string().min(1, "Personne requise"),
-  label: z.string().min(1, "Intitulé requis"),
+  category: z.string().min(1, "Categorie requise").default(DEFAULT_INCOME_CATEGORY),
+  label: z.string().min(1, "IntitulǸ requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const chargeSchema = z.object({
   type: z.enum(CHARGE_TYPES),
   person: z.string().optional().nullable(),
-  label: z.string().min(1, "Intitulé requis"),
+  category: z.string().min(1, "Categorie requise").default(DEFAULT_CHARGE_CATEGORY),
+  label: z.string().min(1, "IntitulǸ requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
 export const budgetSchema = z.object({
-  label: z.string().min(1, "Intitulé requis"),
+  label: z.string().min(1, "IntitulǸ requis"),
   amount: z.coerce.number().nonnegative("Montant invalide"),
 });
 
