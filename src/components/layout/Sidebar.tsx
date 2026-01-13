@@ -39,21 +39,15 @@ const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClos
 const renderSidebarContent = () => (
   <div className="flex h-full flex-col">
     <div className="mb-6 text-sm">
-      <div className="flex items-center gap-3">
-        <Image
-          src="/logo.png"
-          alt="HomeBudget"
-          width={48}
-          height={48}
-          className="h-12 w-12 rounded-xl border border-white/10 bg-black/30"
-          priority
-        />
-        <div>
-          <p className="text-[0.65rem] uppercase tracking-[0.4rem] text-slate-400">Projet</p>
-          <p className="text-xl font-semibold text-white">HomeBudget</p>
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-slate-400">Gestion mensuelle partagee</p>
+      <Image
+        src="/logo.png"
+        alt="HomeBudget"
+        width={72}
+        height={72}
+        className="h-18 w-18 rounded-2xl bg-black/30"
+        priority
+      />
+      <p className="mt-3 text-xs text-slate-400">Gestion mensuelle partagee</p>
     </div>
     <nav className="flex-1 space-y-1 text-sm font-medium">
       {links.map((link) => (
