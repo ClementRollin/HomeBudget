@@ -6,7 +6,7 @@ import { userRepository } from "@/lib/repositories/users";
 import { buildPeopleOptions } from "@/lib/utils";
 import { sheetRepository } from "@/lib/repositories/sheets";
 import { defaultSheetFormValues } from "@/lib/validations/sheet";
-import { getCurrentPeriod } from "@/lib/sheets";
+import { getCurrentPeriod, toSheetFormValues } from "@/lib/sheets";
 
 const getSuggestedPeriod = async (familyId: string) => {
   const { month, year } = getCurrentPeriod();
@@ -25,9 +25,16 @@ const NewSheetPage = async () => {
     redirect("/");
   }
 
-  const suggestedPeriod = await getSuggestedPeriod(familyContext.familyId);
-  const initialValues = { ...defaultSheetFormValues(), ...suggestedPeriod };
-  const members = await userRepository.listFamilyMembers(familyContext.familyId);
+  const period = getCurrentPeriod();
+  const [suggestedPeriod, currentSheet, latestSheet, members] = await Promise.all([
+    getSuggestedPeriod(familyContext.familyId),
+    sheetRepository.findForMonth(familyContext.familyId, period),
+    sheetRepository.findLatestUpToPeriod(familyContext.familyId, period),
+    userRepository.listFamilyMembers(familyContext.familyId),
+  ]);
+  const sourceSheet = currentSheet ?? latestSheet;
+  const baseValues = sourceSheet ? toSheetFormValues(sourceSheet) : defaultSheetFormValues();
+  const initialValues = { ...baseValues, ...suggestedPeriod };
   const peopleOptions = buildPeopleOptions(members, familyContext.userId);
 
   return (

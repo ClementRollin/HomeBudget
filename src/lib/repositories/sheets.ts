@@ -31,6 +31,19 @@ export const sheetRepository = {
       orderBy: { createdAt: "desc" },
     }) as Promise<SheetWithRelations | null>,
 
+  findLatestUpToPeriod: (
+    familyId: string,
+    { month, year }: { month: number; year: number },
+  ) =>
+    prisma.sheet.findFirst({
+      where: {
+        familyId,
+        OR: [{ year: { lt: year } }, { year, month: { lte: month } }],
+      },
+      include: defaultSheetInclude,
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    }) as Promise<SheetWithRelations | null>,
+
   listRecent: (familyId: string, limit = 5) =>
     prisma.sheet.findMany({
       where: { familyId },
