@@ -159,5 +159,3 @@ Sur Vercel, gardez les commandes par défaut :
 - `npm run lint` et `npm run typecheck` avant chaque PR.
 - Formulaire dynamique validé par Zod + React Hook Form côté client.
 - Chaque endpoint API renvoie des statuts clairs (`401`, `400`, `404`) pour faciliter le debugging.
-
-Bon budget à vous !
