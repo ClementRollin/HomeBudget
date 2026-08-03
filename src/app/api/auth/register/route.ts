@@ -7,6 +7,7 @@ import { ensureMemberForUser } from "@/lib/members";
 import { invitationRepository } from "@/lib/repositories/invitations";
 import { generateInviteCode, slugify } from "@/lib/utils";
 import { getInvitationExpirationDate } from "@/lib/invitations";
+import { registerRateLimiter } from "@/lib/rate-limit";
 
 const baseFields = {
   name: z.string().min(2),
@@ -35,6 +36,18 @@ const registerSchema = z.discriminatedUnion("mode", [
 ]);
 
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    ?? request.headers.get("x-real-ip")
+    ?? "unknown";
+  const rateLimitResult = registerRateLimiter.check(ip);
+  if (!rateLimitResult.ok) {
+    const retryAfterSec = Math.ceil(rateLimitResult.retryAfterMs / 1000);
+    return NextResponse.json(
+      { message: `Trop de tentatives. Réessayez dans ${Math.ceil(retryAfterSec / 60)} minutes.` },
+      { status: 429, headers: { "Retry-After": String(retryAfterSec) } },
+    );
+  }
+
   const body = await request.json();
   const parsed = registerSchema.safeParse(body);
 

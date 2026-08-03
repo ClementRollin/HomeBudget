@@ -51,6 +51,10 @@ vi.mock('@/lib/utils', () => ({
   slugify: vi.fn((s: string) => s.toLowerCase().replace(/\s+/g, '-')),
 }))
 
+vi.mock('@/lib/rate-limit', () => ({
+  registerRateLimiter: { check: vi.fn().mockReturnValue({ ok: true }) },
+}))
+
 // Import APRES les mocks
 import { POST } from '@/app/api/auth/register/route'
 import { prisma } from '@/lib/prisma'
