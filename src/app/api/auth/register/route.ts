@@ -1,10 +1,12 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { ensureMemberForUser } from "@/lib/members";
+import { invitationRepository } from "@/lib/repositories/invitations";
 import { generateInviteCode, slugify } from "@/lib/utils";
+import { getInvitationExpirationDate } from "@/lib/invitations";
 
 const baseFields = {
   name: z.string().min(2),
@@ -47,33 +49,71 @@ export async function POST(request: Request) {
     if (!inviteCode) {
       return NextResponse.json({ message: "Code famille requis" }, { status: 400 });
     }
-    family = await prisma.family.findUnique({ where: { inviteCode } });
-    if (!family) {
+
+    // Seule une Invitation valide (non expirée, non utilisée) permet de rejoindre.
+    // Le fallback sur Family.inviteCode brut est volontairement supprimé :
+    // il court-circuitait la révocation via revokeActiveForFamily.
+    const invitationRecord = await invitationRepository.findValidByCode(inviteCode);
+    if (!invitationRecord?.family) {
       return NextResponse.json({ message: "Code famille invalide" }, { status: 404 });
     }
-  } else {
-    if (!familyName) {
-      return NextResponse.json({ message: "Nom de famille requis" }, { status: 400 });
-    }
-    const baseSlug = slugify(familyName);
-    let slug = baseSlug;
-    let suffix = 1;
-    while (await prisma.family.findUnique({ where: { slug } })) {
-      slug = `${baseSlug}-${suffix++}`;
-    }
-    let invite = generateInviteCode();
-    while (await prisma.family.findUnique({ where: { inviteCode: invite } })) {
-      invite = generateInviteCode();
-    }
 
-    family = await prisma.family.create({
+    family = invitationRecord.family;
+
+    const passwordHash = await hash(password, 10);
+
+    const newUser = await prisma.user.create({
       data: {
-        name: familyName,
-        slug,
-        inviteCode: invite,
+        name,
+        email,
+        password: passwordHash,
+        familyId: family.id,
       },
     });
+
+    // Marquer l'invitation comme utilisée
+    await prisma.invitation.update({
+      where: { id: invitationRecord.id },
+      data: { usedAt: new Date(), usedByUserId: newUser.id },
+    });
+
+    await ensureMemberForUser(newUser.id, family.id, name);
+
+    return NextResponse.json({
+      success: true,
+      familyInviteCode: family.inviteCode,
+    });
   }
+
+  // Mode "create" : créer une nouvelle famille
+  if (!familyName) {
+    return NextResponse.json({ message: "Nom de famille requis" }, { status: 400 });
+  }
+  const baseSlug = slugify(familyName);
+  let slug = baseSlug;
+  let suffix = 1;
+  while (await prisma.family.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${suffix++}`;
+  }
+  let invite = generateInviteCode();
+  while (await prisma.family.findUnique({ where: { inviteCode: invite } })) {
+    invite = generateInviteCode();
+  }
+
+  family = await prisma.family.create({
+    data: {
+      name: familyName,
+      slug,
+      inviteCode: invite,
+    },
+  });
+
+  // Créer l'invitation initiale liée à la famille
+  await invitationRepository.createForFamily({
+    familyId: family.id,
+    rawCode: invite,
+    expiresAt: getInvitationExpirationDate(),
+  });
 
   const passwordHash = await hash(password, 10);
 
