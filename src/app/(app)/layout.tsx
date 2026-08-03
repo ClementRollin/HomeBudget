@@ -17,6 +17,10 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
     select: { inviteCode: true },
   });
 
+  if (!family) {
+    console.warn(`[AppLayout] Family not found for familyId=${session.user.familyId} — data integrity issue`);
+  }
+
   return (
     <AppShell session={session} familyInviteCode={family?.inviteCode ?? undefined}>
       {children}
