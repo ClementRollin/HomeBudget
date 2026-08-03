@@ -11,10 +11,12 @@ const getInvitePepper = () => {
   return pepper;
 };
 
-const invitePepper = getInvitePepper();
-
+// [Important 1] Appel lazy dans hashInvitationCode au lieu d'évaluation à l'import.
+// Garantit que les env vars sont disponibles au moment de l'appel,
+// quel que soit le contexte Next.js (Edge, Server Components, etc.).
 export const hashInvitationCode = (code: string) => {
-  return crypto.createHash("sha256").update(`${code}:${invitePepper}`).digest("hex");
+  const pepper = getInvitePepper();
+  return crypto.createHash("sha256").update(`${code}:${pepper}`).digest("hex");
 };
 
 export const defaultInvitationExpirationDays = Number(

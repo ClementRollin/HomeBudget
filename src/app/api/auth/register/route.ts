@@ -25,7 +25,12 @@ const registerSchema = z.discriminatedUnion("mode", [
     mode: z.literal("join"),
     ...baseFields,
     familyName: z.string().optional(),
-    inviteCode: z.string().min(4).transform((code) => code.trim().toUpperCase()),
+    // [Important 3] .refine après transform pour rejeter les codes vides après trim
+    inviteCode: z
+      .string()
+      .min(4)
+      .transform((code) => code.trim().toUpperCase())
+      .refine((code) => code.length >= 4, "Code invalide"),
   }),
 ]);
 
@@ -62,19 +67,15 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(password, 10);
 
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: passwordHash,
-        familyId: family.id,
-      },
-    });
-
-    // Marquer l'invitation comme utilisée
-    await prisma.invitation.update({
-      where: { id: invitationRecord.id },
-      data: { usedAt: new Date(), usedByUserId: newUser.id },
+    // [Critical 1] Utiliser fulfillInvitation pour créer l'utilisateur ET marquer
+    // l'invitation comme utilisée dans une seule transaction atomique.
+    // Évite la race condition : si un crash survient entre user.create et invitation.update,
+    // l'invitation reste inutilisée et la transaction est annulée.
+    const newUser = await invitationRepository.fulfillInvitation(invitationRecord.id, {
+      name,
+      email,
+      password: passwordHash,
+      familyId: family.id,
     });
 
     await ensureMemberForUser(newUser.id, family.id, name);

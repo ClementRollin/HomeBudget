@@ -5,6 +5,8 @@
  *   - seule une Invitation valide (findValidByCode !== null) permet de rejoindre une famille
  *   - si findValidByCode retourne null → 404, même si Family.inviteCode brut existe encore
  *   - familyRepository.findByInviteCode ne doit JAMAIS être appelé dans le flux "join"
+ *   - invitation.update est appelé avec usedAt + usedByUserId après inscription réussie
+ *   - un inviteCode composé uniquement d'espaces doit retourner 400
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -115,7 +117,15 @@ describe('POST /api/auth/register — flux "join"', () => {
     const mockUser = { id: 'user-1', name: 'Alice', email: 'alice@example.com', password: 'hashed', familyId: 'family-1', createdAt: new Date(), updatedAt: new Date() }
 
     vi.mocked(prisma.invitation.findFirst).mockResolvedValue(mockInvitation as never)
-    vi.mocked(prisma.user.create).mockResolvedValue(mockUser as never)
+
+    // fulfillInvitation utilise $transaction
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+      const txMock = {
+        user: { create: vi.fn().mockResolvedValue(mockUser) },
+        invitation: { update: vi.fn().mockResolvedValue({ ...mockInvitation, usedAt: new Date(), usedByUserId: mockUser.id }) },
+      }
+      return fn(txMock as unknown as typeof prisma)
+    })
 
     const res = await POST(buildRequest(validJoinPayload))
 
@@ -130,5 +140,89 @@ describe('POST /api/auth/register — flux "join"', () => {
     const res = await POST(buildRequest(validJoinPayload))
 
     expect(res.status).toBe(409)
+  })
+
+  /**
+   * [Critical 2] Vérifie que l'invitation est bien marquée usedAt après inscription réussie.
+   * Ce test doit ÉCHOUER avec le code actuel (deux opérations séparées au lieu de fulfillInvitation).
+   * Il doit PASSER après l'application du fix Critical 1 (utilisation de fulfillInvitation).
+   */
+  it('should mark invitation as used (usedAt + usedByUserId) via transaction on successful join', async () => {
+    const mockFamily = { id: 'family-1', name: 'Les Dupont', slug: 'les-dupont', inviteCode: 'INVITE01', createdAt: new Date() }
+    const mockInvitation = {
+      id: 'inv-1',
+      familyId: 'family-1',
+      codeHash: 'hashed:INVITE01',
+      createdAt: new Date(),
+      expiresAt: new Date('2099-01-01'),
+      usedAt: null,
+      usedByUserId: null,
+      createdByUserId: null,
+      family: mockFamily,
+    }
+    const mockUser = { id: 'user-1', name: 'Alice', email: 'alice@example.com', password: 'hashed', familyId: 'family-1', createdAt: new Date(), updatedAt: new Date() }
+
+    vi.mocked(prisma.invitation.findFirst).mockResolvedValue(mockInvitation as never)
+
+    // Capturer la fonction tx passée à $transaction pour l'inspecter
+    let capturedTxFn: ((tx: typeof prisma) => Promise<unknown>) | null = null
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+      capturedTxFn = fn
+      const txMock = {
+        user: { create: vi.fn().mockResolvedValue(mockUser) },
+        invitation: { update: vi.fn().mockResolvedValue({ ...mockInvitation, usedAt: new Date(), usedByUserId: mockUser.id }) },
+      }
+      return fn(txMock as unknown as typeof prisma)
+    })
+
+    const res = await POST(buildRequest(validJoinPayload))
+    expect(res.status).toBe(200)
+
+    // fulfillInvitation DOIT passer par $transaction
+    expect(vi.mocked(prisma.$transaction)).toHaveBeenCalledTimes(1)
+    expect(capturedTxFn).not.toBeNull()
+
+    // Rejouer la transaction avec un tx frais pour capturer les appels
+    const txInvitation = { update: vi.fn().mockResolvedValue({}) }
+    const txUser = { create: vi.fn().mockResolvedValue(mockUser) }
+    await capturedTxFn!({ user: txUser, invitation: txInvitation } as unknown as typeof prisma)
+
+    expect(txInvitation.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'inv-1' },
+        data: expect.objectContaining({
+          usedAt: expect.any(Date),
+          usedByUserId: expect.any(String),
+        }),
+      })
+    )
+  })
+})
+
+/**
+ * [Important 3] Valide que le schéma Zod rejette un inviteCode composé uniquement d'espaces.
+ * Un code "    " passe min(4) mais est trimé en "" → hashInvitationCode("") → 404 silencieux.
+ * Ce test doit ÉCHOUER avec le code actuel, puis PASSER après ajout du .refine().
+ */
+describe('POST /api/auth/register — validation inviteCode', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+  })
+
+  it('should return 400 for a whitespace-only inviteCode (edge case after trim)', async () => {
+    const payload = {
+      mode: 'join',
+      name: 'Alice',
+      email: 'alice@example.com',
+      password: 'secret123',
+      inviteCode: '    ', // 4 espaces : passe min(4), trimé en ""
+    }
+
+    const res = await POST(buildRequest(payload))
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.message).toBe('Payload invalide')
   })
 })
