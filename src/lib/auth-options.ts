@@ -17,7 +17,6 @@ type AppUser = {
   name?: string | null;
   familyId: string;
   familyName: string;
-  familyInviteCode: string;
   familyMemberId: string;
 };
 
@@ -75,7 +74,6 @@ export const authOptions: NextAuthOptions = {
           name: user.name ?? undefined,
           familyId: user.familyId,
           familyName: user.family.name,
-          familyInviteCode: user.family.inviteCode,
           familyMemberId: member.id,
         };
       },
@@ -88,7 +86,6 @@ export const authOptions: NextAuthOptions = {
         token.id = authUser.id;
         token.familyId = authUser.familyId;
         token.familyName = authUser.familyName;
-        token.familyInviteCode = authUser.familyInviteCode;
         token.familyMemberId = authUser.familyMemberId;
       }
 
@@ -99,7 +96,6 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.familyId = token.familyId as string;
         session.user.familyName = token.familyName as string;
-        session.user.familyInviteCode = token.familyInviteCode as string;
         session.user.familyMemberId = token.familyMemberId as string;
       }
 
