@@ -125,6 +125,8 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
     if (!sheetId) return;
 
+    if (!window.confirm("Supprimer cette fiche ? Cette action est irréversible.")) return;
+
     setIsDeleting(true);
 
     setServerMessage(null);
