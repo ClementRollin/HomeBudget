@@ -13,7 +13,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
   CHARGE_TYPES,
-  PEOPLE,
   defaultSheetFormValues,
   sheetFormSchema,
   type SheetFormValues,
@@ -47,7 +46,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
   const mergedPeople = Array.from(new Set([...providedPeople, ...initialPeople]));
 
-  const people = mergedPeople.length > 0 ? mergedPeople : [...PEOPLE];
+  const people = mergedPeople.length > 0 ? mergedPeople : ["Moi", "Partenaire"];
 
   const defaultPerson = people[0] ?? "";
 

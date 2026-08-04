@@ -1,7 +1,6 @@
 
 import { z } from "zod";
 
-export const PEOPLE = ["Moi", "Partenaire"] as const;
 export const CHARGE_TYPES = [
   "FIXE_COMMUN",
   "FIXE_INDIVIDUEL",
