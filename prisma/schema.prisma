@@ -8,15 +8,18 @@ generator client {
 }
 
 model Family {
-  id          String       @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
-  slug        String       @unique
-  inviteCode  String       @unique
-  createdAt   DateTime     @default(now())
+  slug        String           @unique
+  inviteCode  String           @unique
+  createdAt   DateTime         @default(now())
   users       User[]
   members     FamilyMember[]
   sheets      Sheet[]
   invitations Invitation[]
+  assets      Asset[]
+  debts       Debt[]
+  goals       PatrimonialGoal[]
 }
 
 model Invitation {
@@ -116,4 +119,72 @@ enum ChargeCategory {
   FIXE_INDIVIDUEL
   EXCEPTIONNEL_COMMUN
   EXCEPTIONNEL_INDIVIDUEL
+}
+
+enum AssetType {
+  PEA
+  ASSURANCE_VIE
+  PER
+  LIVRET
+  SCPI
+  IMMOBILIER
+  CRYPTO
+  AUTRE
+}
+
+model Asset {
+  id                     String        @id @default(cuid())
+  family                 Family        @relation(fields: [familyId], references: [id])
+  familyId               String
+  type                   AssetType
+  encryptedName          String
+  encryptedCurrentValue  String
+  encryptedTotalInvested String
+  encryptedAnnualFee     String        @default("")
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  snapshots              AssetSnapshot[]
+
+  @@index([familyId])
+}
+
+model AssetSnapshot {
+  id             String   @id @default(cuid())
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId        String
+  year           Int
+  month          Int
+  encryptedValue String
+  createdAt      DateTime @default(now())
+
+  @@unique([assetId, year, month])
+  @@index([assetId])
+}
+
+model Debt {
+  id                      String    @id @default(cuid())
+  family                  Family    @relation(fields: [familyId], references: [id])
+  familyId                String
+  encryptedLabel          String
+  encryptedBalance        String
+  encryptedRate           String
+  encryptedMonthlyPayment String
+  endDate                 DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([familyId])
+}
+
+model PatrimonialGoal {
+  id              String   @id @default(cuid())
+  family          Family   @relation(fields: [familyId], references: [id])
+  familyId        String
+  encryptedLabel  String
+  encryptedTarget String
+  horizon         Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([familyId])
 }
