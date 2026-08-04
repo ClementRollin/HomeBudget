@@ -11,14 +11,13 @@ declare module "next-auth" {
   }
 
   interface User {
-    id: string;
     familyId: string;
     familyName: string;
     familyMemberId: string;
   }
 }
 
-declare module "next-auth/jwt" {
+declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     familyId?: string;
