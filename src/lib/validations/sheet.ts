@@ -1,13 +1,19 @@
 
 import { z } from "zod";
 
-export const PEOPLE = ["Moi", "Partenaire"] as const;
 export const CHARGE_TYPES = [
   "FIXE_COMMUN",
   "FIXE_INDIVIDUEL",
   "EXCEPTIONNEL_COMMUN",
   "EXCEPTIONNEL_INDIVIDUEL",
 ] as const;
+
+export const CHARGE_TYPE_LABELS: Record<(typeof CHARGE_TYPES)[number], string> = {
+  FIXE_COMMUN: "Charges fixes communes",
+  FIXE_INDIVIDUEL: "Charges fixes individuelles",
+  EXCEPTIONNEL_COMMUN: "Charges exceptionnelles communes",
+  EXCEPTIONNEL_INDIVIDUEL: "Charges exceptionnelles individuelles",
+};
 
 export const salarySchema = z.object({
   person: z.string().min(1, "Personne requise"),

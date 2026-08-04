@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { signIn } from "next-auth/react";
@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 const baseFields = {
   name: z.string().min(2, "Nom requis"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "6 caractères minimum"),
+  password: z.string().min(8, "8 caractères minimum"),
 };
 
 const registerSchema = z.discriminatedUnion("mode", [
@@ -40,7 +40,7 @@ const RegisterForm = () => {
     reset,
     setValue,
     clearErrors,
-    watch,
+    control,
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -52,7 +52,7 @@ const RegisterForm = () => {
       inviteCode: "",
     },
   });
-  const mode = watch("mode");
+  const mode = useWatch({ control, name: "mode" });
 
   const handleModeChange = (nextMode: RegisterValues["mode"]) => {
     if (nextMode === mode) return;

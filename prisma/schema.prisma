@@ -8,14 +8,30 @@ generator client {
 }
 
 model Family {
-  id         String   @id @default(cuid())
-  name       String
-  slug       String   @unique
-  inviteCode String   @unique
-  createdAt  DateTime @default(now())
-  users      User[]
-  members    FamilyMember[]
-  sheets     Sheet[]
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  inviteCode  String       @unique
+  createdAt   DateTime     @default(now())
+  users       User[]
+  members     FamilyMember[]
+  sheets      Sheet[]
+  invitations Invitation[]
+}
+
+model Invitation {
+  id              String    @id @default(cuid())
+  family          Family    @relation(fields: [familyId], references: [id])
+  familyId        String
+  codeHash        String
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime?
+  usedAt          DateTime?
+  usedByUserId    String?
+  createdByUserId String?
+
+  @@index([familyId])
+  @@unique([familyId, codeHash])
 }
 
 model User {
@@ -59,6 +75,8 @@ model Sheet {
   charges   Charge[]
   budgets   Budget[]
   createdAt DateTime  @default(now())
+
+  @@index([familyId, year, month])
 }
 
 model Salary {

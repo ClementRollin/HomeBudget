@@ -3,13 +3,22 @@
 import type { Session } from "next-auth";
 
 import SignOutButton from "@/components/auth/SignOutButton";
-import { getCurrentPeriod, getMonthLabel } from "@/lib/sheets";
+import { getMonthLabel } from "@/lib/sheets";
 
-const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSidebar: () => void }) => {
-  const { month, year } = getCurrentPeriod();
+const Header = ({
+  session,
+  familyInviteCode,
+  currentPeriod,
+  onToggleSidebar,
+}: {
+  session: Session;
+  familyInviteCode?: string;
+  currentPeriod: { month: number; year: number };
+  onToggleSidebar: () => void;
+}) => {
+  const { month, year } = currentPeriod;
   const firstName = session?.user?.name?.split(" ")[0] ?? "HomeBudget";
   const familyName = session?.user?.familyName ?? "Famille";
-  const inviteCode = session?.user?.familyInviteCode;
 
   return (
     <header className="flex flex-col gap-4 border-b border-border bg-background/80 px-4 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
@@ -22,9 +31,9 @@ const Header = ({ session, onToggleSidebar }: { session: Session; onToggleSideba
           <p className="text-sm text-slate-400">
             Planifiez, mesurez et ajustez vos finances du foyer en un coup d&apos;œil.
           </p>
-          {inviteCode ? (
+          {familyInviteCode ? (
             <p className="text-xs text-slate-500">
-              Code famille : <span className="font-semibold text-slate-200">{inviteCode}</span>
+              Code famille : <span className="font-semibold text-slate-200">{familyInviteCode}</span>
             </p>
           ) : null}
         </div>

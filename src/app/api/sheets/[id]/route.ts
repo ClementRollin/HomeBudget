@@ -1,34 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  decryptSheet,
-  encryptSheetPayload,
-  type SecureSheet,
-} from "@/lib/sheets";
+import { resolveFamilySession, serializeSheet } from "@/lib/api/sheets";
+import { encryptSheetPayload } from "@/lib/sheets";
 import { sheetFormSchema } from "@/lib/validations/sheet";
-
-const serializeSheet = (sheet: SecureSheet) => {
-  const decrypted = decryptSheet(sheet);
-  return {
-    ...decrypted,
-    createdAt: decrypted.createdAt.toISOString(),
-  };
-};
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const session = await getCurrentSession();
-  if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
+  const auth = await resolveFamilySession();
+  if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  const { familyId } = auth;
 
   const sheet = await prisma.sheet.findFirst({
-    where: { id, familyId: session.user.familyId },
+    where: { id, familyId },
     include: {
       salaries: { include: { member: true } },
       charges: { include: { member: true } },
@@ -48,10 +35,9 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const session = await getCurrentSession();
-  if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
+  const auth = await resolveFamilySession();
+  if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  const { familyId } = auth;
 
   const body = await request.json();
   const parsed = sheetFormSchema.safeParse(body);
@@ -59,14 +45,12 @@ export async function PUT(
     return NextResponse.json({ message: "Payload invalide" }, { status: 400 });
   }
 
-  const existingSheet = await prisma.sheet.findFirst({
-    where: { id, familyId: session.user.familyId },
-  });
-  if (!existingSheet) {
+  const sheetExists = await prisma.sheet.count({ where: { id, familyId } });
+  if (!sheetExists) {
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 
-  const securePayload = await encryptSheetPayload(session.user.familyId, parsed.data);
+  const securePayload = await encryptSheetPayload(familyId, parsed.data);
 
   await prisma.$transaction([
     prisma.salary.deleteMany({ where: { sheetId: id } }),
@@ -92,15 +76,12 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const session = await getCurrentSession();
-  if (!session?.user) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  }
+  const auth = await resolveFamilySession();
+  if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+  const { familyId } = auth;
 
-  const sheet = await prisma.sheet.findFirst({
-    where: { id, familyId: session.user.familyId },
-  });
-  if (!sheet) {
+  const sheetExists = await prisma.sheet.count({ where: { id, familyId } });
+  if (!sheetExists) {
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 

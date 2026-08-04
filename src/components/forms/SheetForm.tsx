@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
   CHARGE_TYPES,
-  PEOPLE,
+  CHARGE_TYPE_LABELS,
   defaultSheetFormValues,
   sheetFormSchema,
   type SheetFormValues,
@@ -47,7 +47,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
   const mergedPeople = Array.from(new Set([...providedPeople, ...initialPeople]));
 
-  const people = mergedPeople.length > 0 ? mergedPeople : [...PEOPLE];
+  const people = mergedPeople.length > 0 ? mergedPeople : ["Moi", "Partenaire"];
 
   const defaultPerson = people[0] ?? "";
 
@@ -124,6 +124,8 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
   const handleDelete = async () => {
 
     if (!sheetId) return;
+
+    if (!window.confirm("Supprimer cette fiche ? Cette action est irréversible.")) return;
 
     setIsDeleting(true);
 
@@ -335,7 +337,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
                 <option key={type} value={type}>
 
-                  {type.replaceAll("_", " ")}
+                  {CHARGE_TYPE_LABELS[type]}
 
                 </option>
 
