@@ -24,8 +24,22 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
 
   const currentPeriod = getCurrentPeriod();
 
+  const hasCurrentSheet = !!(await prisma.sheet.findFirst({
+    where: {
+      familyId: session.user.familyId,
+      year: currentPeriod.year,
+      month: currentPeriod.month,
+    },
+    select: { id: true },
+  }));
+
   return (
-    <AppShell session={session} familyInviteCode={family?.inviteCode ?? undefined} currentPeriod={currentPeriod}>
+    <AppShell
+      session={session}
+      familyInviteCode={family?.inviteCode ?? undefined}
+      currentPeriod={currentPeriod}
+      hasCurrentSheet={hasCurrentSheet}
+    >
       {children}
     </AppShell>
   );

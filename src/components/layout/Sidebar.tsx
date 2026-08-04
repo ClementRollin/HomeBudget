@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { MONTH_NAMES } from "@/lib/sheets";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -11,7 +12,17 @@ const links = [
   { href: "/sheets", label: "Historique" },
 ];
 
-const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) => {
+const Sidebar = ({
+  mobileOpen = false,
+  onClose,
+  hasCurrentSheet,
+  currentPeriod,
+}: {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+  hasCurrentSheet: boolean;
+  currentPeriod: { month: number; year: number };
+}) => {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -52,8 +63,25 @@ const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClos
           </Link>
         ))}
       </nav>
-      <div className="mt-auto rounded-xl border border-dashed border-slate-700 p-4 text-xs text-slate-400">
-        Conseil : créez une fiche chaque 1er du mois pour garder le cap sur vos finances.
+      <div className="mt-auto rounded-xl border border-dashed border-slate-700 p-4 text-xs">
+        {hasCurrentSheet ? (
+          <p className="text-slate-400">
+            Fiche de ce mois prête. Consultez le dashboard pour les indicateurs clés.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <p className="font-semibold text-amber-400">
+              Fiche {MONTH_NAMES[currentPeriod.month - 1]} non créée
+            </p>
+            <Link
+              href="/sheets/new"
+              onClick={onClose}
+              className="block text-accent underline-offset-2 hover:underline"
+            >
+              Créer la fiche →
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

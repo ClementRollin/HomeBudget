@@ -1,15 +1,19 @@
 ﻿import { redirect } from "next/navigation";
 import Link from "next/link";
 
+import MonthlyChart from "@/components/dashboard/MonthlyChart";
 import StatCard from "@/components/dashboard/StatCard";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatPercent } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import {
   aggregateSheetMetrics,
+  computeIncomeDistribution,
   computeSheetMetrics,
   decryptSheet,
   getCurrentPeriod,
   getMonthLabel,
+  MONTH_NAMES,
+  normalizeSheetCharges,
   type SecureSheet,
 } from "@/lib/sheets";
 import { getCurrentSession } from "@/lib/auth";
@@ -27,7 +31,11 @@ const DashboardPage = async () => {
   }
 
   const period = getCurrentPeriod();
-  const [currentSheet, history, yearSheets] = await Promise.all([
+
+  // Calculer le range des 12 derniers mois
+  const twelveMonthsAgo = new Date(period.year, period.month - 12, 1);
+
+  const [currentSheet, history, yearSheets, recentSheets] = await Promise.all([
     prisma.sheet.findFirst({
       where: { month: period.month, year: period.year, familyId: session.user.familyId },
       include: includeConfig,
@@ -46,6 +54,17 @@ const DashboardPage = async () => {
       where: { familyId: session.user.familyId, year: period.year },
       include: includeConfig,
     }) as Promise<SecureSheet[]>,
+    prisma.sheet.findMany({
+      where: {
+        familyId: session.user.familyId,
+        OR: [
+          { year: { gt: twelveMonthsAgo.getFullYear() } },
+          { year: twelveMonthsAgo.getFullYear(), month: { gte: twelveMonthsAgo.getMonth() + 1 } },
+        ],
+      },
+      include: includeConfig,
+      orderBy: [{ year: "asc" }, { month: "asc" }],
+    }) as Promise<SecureSheet[]>,
   ]);
 
   const decryptedCurrent = currentSheet ? decryptSheet(currentSheet) : null;
@@ -59,6 +78,42 @@ const DashboardPage = async () => {
   const savingsRate = currentMetrics && currentMetrics.income > 0
     ? ((currentMetrics.income - currentMetrics.expenses - currentMetrics.budgets) / currentMetrics.income) * 100
     : 0;
+
+  // Données pour le graphe 12 mois
+  const decryptedRecentSheets = recentSheets.map(decryptSheet);
+  const chartData = decryptedRecentSheets.map((sheet) => {
+    const m = computeSheetMetrics(sheet);
+    return {
+      label: `${MONTH_NAMES[sheet.month - 1].slice(0, 3)} ${sheet.year}`,
+      revenus: m.income,
+      charges: m.expenses,
+      solde: m.balance,
+    };
+  });
+
+  // Vue consolidée membres pour le mois courant
+  const memberBreakdown = decryptedCurrent
+    ? (() => {
+        const distribution = computeIncomeDistribution(decryptedCurrent);
+        const normalizedCharges = normalizeSheetCharges(decryptedCurrent);
+        const individualChargesMap = normalizedCharges.reduce<Map<string, number>>((acc, charge) => {
+          if (charge.type === "FIXE_COMMUN" || !charge.person || charge.person === "Commun") return acc;
+          acc.set(charge.person, (acc.get(charge.person) ?? 0) + charge.amount);
+          return acc;
+        }, new Map());
+        return distribution.distribution.map((item) => {
+          const individualCharges = individualChargesMap.get(item.person) ?? 0;
+          return {
+            person: item.person,
+            income: item.amount,
+            percentage: item.percentage,
+            fixedShare: item.fixedChargeShare,
+            individualCharges,
+            netAfterCharges: item.amount - individualCharges - item.fixedChargeShare,
+          };
+        });
+      })()
+    : null;
 
   return (
     <div className="space-y-10">
@@ -106,6 +161,16 @@ const DashboardPage = async () => {
           />
         </div>
       </section>
+
+      {chartData.length >= 2 && (
+        <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white">Évolution sur 12 mois</h2>
+            <p className="text-sm text-slate-400">Revenus, charges et solde mois par mois.</p>
+          </div>
+          <MonthlyChart data={chartData} />
+        </section>
+      )}
 
       <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
         <div className="flex flex-wrap items-start justify-between gap-6">
@@ -221,6 +286,46 @@ const DashboardPage = async () => {
           )}
         </div>
       </section>
+
+      {memberBreakdown && memberBreakdown.length > 0 && (
+        <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white">Vue consolidée des membres</h2>
+            <p className="text-sm text-slate-400">Répartition revenus / charges / reste à vivre pour {monthLabel}.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {memberBreakdown.map((member) => (
+              <div key={member.person} className="rounded-2xl border border-white/5 bg-white/[0.04] p-5 text-sm space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Membre</p>
+                  <p className="text-lg font-semibold text-white">{member.person}</p>
+                  <p className="text-xs text-slate-400">{formatPercent(member.percentage, "fr-FR", 0)} du foyer</p>
+                </div>
+                <div className="space-y-2 text-slate-300">
+                  <div className="flex justify-between">
+                    <span>Revenus</span>
+                    <span className="font-semibold text-white">{formatCurrency(member.income)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Part charges communes</span>
+                    <span>{formatCurrency(member.fixedShare)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Charges individuelles</span>
+                    <span>{formatCurrency(member.individualCharges)}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-white/5 pt-2 font-semibold text-white">
+                    <span>Reste à vivre</span>
+                    <span className={member.netAfterCharges >= 0 ? "text-emerald-300" : "text-rose-300"}>
+                      {formatCurrency(member.netAfterCharges)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

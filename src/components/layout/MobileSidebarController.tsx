@@ -10,18 +10,25 @@ const MobileSidebarController = ({
   session,
   familyInviteCode,
   currentPeriod,
+  hasCurrentSheet,
   children,
 }: {
   session: Session;
   familyInviteCode?: string;
   currentPeriod: { month: number; year: number };
+  hasCurrentSheet: boolean;
   children: ReactNode;
 }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <>
-      <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+      <Sidebar
+        mobileOpen={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+        hasCurrentSheet={hasCurrentSheet}
+        currentPeriod={currentPeriod}
+      />
       <div className="flex w-full flex-col">
         <Header
           session={session}
