@@ -75,6 +75,8 @@ model Sheet {
   charges   Charge[]
   budgets   Budget[]
   createdAt DateTime  @default(now())
+
+  @@index([familyId, year, month])
 }
 
 model Salary {
