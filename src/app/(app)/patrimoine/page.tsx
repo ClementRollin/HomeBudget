@@ -6,7 +6,7 @@ import { decryptAsset, decryptDebt, decryptGoal } from "@/lib/patrimoine";
 import { formatCurrency } from "@/lib/format";
 import { ASSET_TYPE_LABELS } from "@/lib/validations/patrimoine";
 import AssetManager from "@/components/patrimoine/AssetManager";
-import DebtManager from "@/components/patrimoine/DebtManager";
+import DebtTracker from "@/components/patrimoine/DebtTracker";
 import GoalManager from "@/components/patrimoine/GoalManager";
 
 const PatrimoinePage = async () => {
@@ -98,7 +98,7 @@ const PatrimoinePage = async () => {
       <AssetManager initialAssets={assets} />
 
       {/* Dettes */}
-      <DebtManager initialDebts={debts} />
+      <DebtTracker initialDebts={debts} />
 
       {/* Objectifs */}
       <GoalManager initialGoals={goals} />
