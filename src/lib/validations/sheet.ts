@@ -8,6 +8,13 @@ export const CHARGE_TYPES = [
   "EXCEPTIONNEL_INDIVIDUEL",
 ] as const;
 
+export const CHARGE_TYPE_LABELS: Record<(typeof CHARGE_TYPES)[number], string> = {
+  FIXE_COMMUN: "Charges fixes communes",
+  FIXE_INDIVIDUEL: "Charges fixes individuelles",
+  EXCEPTIONNEL_COMMUN: "Charges exceptionnelles communes",
+  EXCEPTIONNEL_INDIVIDUEL: "Charges exceptionnelles individuelles",
+};
+
 export const salarySchema = z.object({
   person: z.string().min(1, "Personne requise"),
   label: z.string().min(1, "Intitulé requis"),

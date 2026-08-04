@@ -16,13 +16,7 @@ import {
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { getCurrentSession } from "@/lib/auth";
 import { buildPeopleOptions } from "@/lib/utils";
-
-const CHARGE_TYPE_LABELS: Record<string, string> = {
-  FIXE_COMMUN: "Charges fixes communes",
-  FIXE_INDIVIDUEL: "Charges fixes individuelles",
-  EXCEPTIONNEL_COMMUN: "Charges exceptionnelles communes",
-  EXCEPTIONNEL_INDIVIDUEL: "Charges exceptionnelles individuelles",
-};
+import { CHARGE_TYPE_LABELS } from "@/lib/validations/sheet";
 
 const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
