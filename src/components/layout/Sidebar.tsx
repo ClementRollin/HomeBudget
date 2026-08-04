@@ -10,6 +10,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
+  { href: "/patrimoine", label: "Patrimoine" },
 ];
 
 const Sidebar = ({
@@ -37,6 +38,9 @@ const Sidebar = ({
     }
     if (href === "/sheets") {
       return pathname === "/sheets" || (pathname.startsWith("/sheets/") && !pathname.startsWith("/sheets/new"));
+    }
+    if (href === "/patrimoine") {
+      return pathname === "/patrimoine";
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
