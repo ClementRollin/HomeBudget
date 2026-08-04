@@ -222,49 +222,57 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
         {salaryFields.map((field, index) => (
           <div
             key={field.id}
-            className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-4"
+            className="space-y-3 rounded-2xl border border-white/5 p-4 md:grid md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-4 md:space-y-0"
           >
-            <div>
-              <label htmlFor={`salaries-${index}-person`} className="sr-only">Membre</label>
-              <select
-                id={`salaries-${index}-person`}
-                {...form.register(`salaries.${index}.person` as const)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              >
-                {people.map((person) => (
-                  <option key={person} value={person}>
-                    {person}
-                  </option>
-                ))}
-              </select>
+            {/* Ligne 1 mobile : Membre + Libellé côte à côte */}
+            <div className="grid grid-cols-2 gap-3 md:contents">
+              <div>
+                <label htmlFor={`salaries-${index}-person`} className="mb-1 block text-xs text-slate-500 md:sr-only">Membre</label>
+                <select
+                  id={`salaries-${index}-person`}
+                  {...form.register(`salaries.${index}.person` as const)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                >
+                  {people.map((person) => (
+                    <option key={person} value={person}>
+                      {person}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={`salaries-${index}-label`} className="mb-1 block text-xs text-slate-500 md:sr-only">Libellé</label>
+                <input
+                  id={`salaries-${index}-label`}
+                  placeholder="Libellé"
+                  {...form.register(`salaries.${index}.label` as const)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor={`salaries-${index}-label`} className="sr-only">Libellé</label>
-              <input
-                id={`salaries-${index}-label`}
-                placeholder="Libellé"
-                {...form.register(`salaries.${index}.label` as const)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              />
+            {/* Ligne 2 mobile : Montant + Supprimer côte à côte */}
+            <div className="grid grid-cols-2 gap-3 md:contents">
+              <div>
+                <label htmlFor={`salaries-${index}-amount`} className="mb-1 block text-xs text-slate-500 md:sr-only">Montant</label>
+                <input
+                  id={`salaries-${index}-amount`}
+                  type="number"
+                  step="0.01"
+                  placeholder="Montant"
+                  {...form.register(`salaries.${index}.amount` as const, { valueAsNumber: true })}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-end md:contents">
+                <button
+                  type="button"
+                  className="text-sm text-rose-400 md:text-center"
+                  onClick={() => removeSalary(index)}
+                >
+                  Supprimer
+                </button>
+              </div>
             </div>
-            <div>
-              <label htmlFor={`salaries-${index}-amount`} className="sr-only">Montant</label>
-              <input
-                id={`salaries-${index}-amount`}
-                type="number"
-                step="0.01"
-                placeholder="Montant"
-                {...form.register(`salaries.${index}.amount` as const, { valueAsNumber: true })}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              />
-            </div>
-            <button
-              type="button"
-              className="text-left text-sm text-rose-400"
-              onClick={() => removeSalary(index)}
-            >
-              Supprimer
-            </button>
           </div>
         ))}
 
@@ -299,54 +307,60 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
         {chargeFields.map((field, index) => (
           <div
             key={field.id}
-            className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-5"
+            className="space-y-3 rounded-2xl border border-white/5 p-4 md:grid md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:items-center md:gap-4 md:space-y-0"
           >
-            <div>
-              <label htmlFor={`charges-${index}-type`} className="sr-only">Type</label>
-              <select
-                id={`charges-${index}-type`}
-                {...form.register(`charges.${index}.type` as const)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              >
-                {CHARGE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {CHARGE_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
+            {/* Ligne 1 mobile : Type + Personne côte à côte */}
+            <div className="grid grid-cols-2 gap-3 md:contents">
+              <div>
+                <label htmlFor={`charges-${index}-type`} className="mb-1 block text-xs text-slate-500 md:sr-only">Type</label>
+                <select
+                  id={`charges-${index}-type`}
+                  {...form.register(`charges.${index}.type` as const)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                >
+                  {CHARGE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {CHARGE_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={`charges-${index}-person`} className="mb-1 block text-xs text-slate-500 md:sr-only">Personne</label>
+                <input
+                  id={`charges-${index}-person`}
+                  placeholder="Personne (optionnel)"
+                  {...form.register(`charges.${index}.person` as const)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor={`charges-${index}-person`} className="sr-only">Personne</label>
-              <input
-                id={`charges-${index}-person`}
-                placeholder="Personne (optionnel)"
-                {...form.register(`charges.${index}.person` as const)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              />
-            </div>
-            <div>
-              <label htmlFor={`charges-${index}-label`} className="sr-only">Libellé</label>
-              <input
-                id={`charges-${index}-label`}
-                placeholder="Libellé"
-                {...form.register(`charges.${index}.label` as const)}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              />
-            </div>
-            <div>
-              <label htmlFor={`charges-${index}-amount`} className="sr-only">Montant</label>
-              <input
-                id={`charges-${index}-amount`}
-                type="number"
-                step="0.01"
-                placeholder="Montant"
-                {...form.register(`charges.${index}.amount` as const, { valueAsNumber: true })}
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-              />
+            {/* Ligne 2 mobile : Libellé + Montant côte à côte */}
+            <div className="grid grid-cols-2 gap-3 md:contents">
+              <div>
+                <label htmlFor={`charges-${index}-label`} className="mb-1 block text-xs text-slate-500 md:sr-only">Libellé</label>
+                <input
+                  id={`charges-${index}-label`}
+                  placeholder="Libellé"
+                  {...form.register(`charges.${index}.label` as const)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor={`charges-${index}-amount`} className="mb-1 block text-xs text-slate-500 md:sr-only">Montant</label>
+                <input
+                  id={`charges-${index}-amount`}
+                  type="number"
+                  step="0.01"
+                  placeholder="Montant"
+                  {...form.register(`charges.${index}.amount` as const, { valueAsNumber: true })}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
+                />
+              </div>
             </div>
             <button
               type="button"
-              className="text-left text-sm text-rose-400"
+              className="text-sm text-rose-400 md:text-center"
               onClick={() => removeCharge(index)}
             >
               Supprimer
