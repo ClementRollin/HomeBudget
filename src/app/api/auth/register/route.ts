@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       name,
       email,
       password: passwordHash,
-      familyId: family.id,
+      family: { connect: { id: family.id } },
     });
 
     await ensureMemberForUser(newUser.id, family.id, name);

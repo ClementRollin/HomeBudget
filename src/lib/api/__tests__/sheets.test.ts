@@ -38,7 +38,6 @@ const makeSecureSheet = (overrides: Partial<SecureSheet> = {}): SecureSheet => (
   familyId: 'fam-1',
   ownerId: 'user-1',
   createdAt: new Date('2024-01-15T10:00:00.000Z'),
-  updatedAt: new Date('2024-01-15T10:00:00.000Z'),
   salaries: [],
   charges: [],
   budgets: [],
@@ -64,7 +63,7 @@ describe('serializeSheet', () => {
           encryptedLabel: 'enc:Salaire principal',
           encryptedAmount: 'enc:3000',
           createdAt: new Date('2024-01-15T10:00:00.000Z'),
-          member: { id: 'member-1', familyId: 'fam-1', displayName: 'Moi', createdAt: new Date(), updatedAt: new Date() },
+          member: { id: 'member-1', familyId: 'fam-1', userId: null, slug: 'moi', displayName: 'Moi', createdAt: new Date(), updatedAt: new Date() },
         },
       ],
     })

@@ -114,7 +114,7 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
   ];
 
   const chargeTotalsByType = normalizedCharges.reduce<
-    Map<string, { amount: number; byPerson: Map<string, number> }>
+    Map<typeof normalizedCharges[number]["type"], { amount: number; byPerson: Map<string, number> }>
   >((acc, charge) => {
     const entry = acc.get(charge.type) ?? {
       amount: 0,
