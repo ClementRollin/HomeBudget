@@ -45,10 +45,8 @@ export async function PUT(
     return NextResponse.json({ message: "Payload invalide" }, { status: 400 });
   }
 
-  const existingSheet = await prisma.sheet.findFirst({
-    where: { id, familyId },
-  });
-  if (!existingSheet) {
+  const sheetExists = await prisma.sheet.count({ where: { id, familyId } });
+  if (!sheetExists) {
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 
@@ -82,10 +80,8 @@ export async function DELETE(
   if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   const { familyId } = auth;
 
-  const sheet = await prisma.sheet.findFirst({
-    where: { id, familyId },
-  });
-  if (!sheet) {
+  const sheetExists = await prisma.sheet.count({ where: { id, familyId } });
+  if (!sheetExists) {
     return NextResponse.json({ message: "Fiche introuvable" }, { status: 404 });
   }
 
