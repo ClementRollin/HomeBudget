@@ -3,6 +3,7 @@
 import type { Session } from "next-auth";
 
 import SignOutButton from "@/components/auth/SignOutButton";
+import CopyInviteCodeButton from "@/components/layout/CopyInviteCodeButton";
 import { getMonthLabel } from "@/lib/sheets";
 
 const Header = ({
@@ -31,11 +32,7 @@ const Header = ({
           <p className="text-sm text-slate-400">
             Planifiez, mesurez et ajustez vos finances du foyer en un coup d&apos;œil.
           </p>
-          {familyInviteCode ? (
-            <p className="text-xs text-slate-500">
-              Code famille : <span className="font-semibold text-slate-200">{familyInviteCode}</span>
-            </p>
-          ) : null}
+          {familyInviteCode ? <CopyInviteCodeButton code={familyInviteCode} /> : null}
         </div>
         <button
           type="button"

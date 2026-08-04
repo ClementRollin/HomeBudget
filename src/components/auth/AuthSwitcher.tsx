@@ -1,11 +1,23 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 
 const AuthSwitcher = () => {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const mode = (searchParams.get("mode") === "register" ? "register" : "login") as "login" | "register";
+
+  const setMode = (m: "login" | "register") => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (m === "register") {
+      params.set("mode", "register");
+    } else {
+      params.delete("mode");
+    }
+    router.replace(`/?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-8">

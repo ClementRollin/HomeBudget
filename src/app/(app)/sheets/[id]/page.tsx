@@ -1,4 +1,5 @@
 ﻿import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 
 import SheetForm from "@/components/forms/SheetForm";
 import ChargesOverview from "@/components/sheets/ChargesOverview";
@@ -9,6 +10,7 @@ import {
   computeSheetMetrics,
   decryptSheet,
   fetchFamilyMembers,
+  getCurrentPeriod,
   getMonthLabel,
   normalizeSheetCharges,
   toSheetFormValues,
@@ -93,6 +95,9 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
     });
   });
 
+  const period = getCurrentPeriod();
+  const isPast = sheet.year < period.year || (sheet.year === period.year && sheet.month < period.month);
+
   const totalBudgets = decryptedSheet.budgets.reduce(
     (sum, budget) => sum + budget.amount,
     0,
@@ -149,6 +154,9 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
 
   return (
     <div className="space-y-10">
+      <Link href="/sheets" className="mb-6 inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white">
+        <span aria-hidden="true">←</span> Toutes les fiches
+      </Link>
       <section className="rounded-3xl border border-white/5 bg-black/40 p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -156,6 +164,11 @@ const SheetDetailPage = async ({ params }: { params: Promise<{ id: string }> }) 
             <h1 className="text-3xl font-semibold text-white">
               {getMonthLabel(sheet.month, sheet.year)}
             </h1>
+            {isPast && (
+              <span className="mt-2 inline-block rounded-full border border-slate-600 px-3 py-0.5 text-xs text-slate-400">
+                Archivée
+              </span>
+            )}
             <p className="text-sm text-slate-400">
               {sheet.salaries.length} salaires - {sheet.charges.length} charges - {sheet.budgets.length} budgets
             </p>
