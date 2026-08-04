@@ -56,6 +56,9 @@ const DashboardPage = async () => {
   const yearMetrics = aggregateSheetMetrics(decryptedYearSheets);
   const monthLabel = getMonthLabel(period.month, period.year);
   const firstName = session.user.name?.split(/\s+/)[0] ?? session.user.familyName ?? "famille";
+  const savingsRate = currentMetrics && currentMetrics.income > 0
+    ? ((currentMetrics.income - currentMetrics.expenses - currentMetrics.budgets) / currentMetrics.income) * 100
+    : 0;
 
   return (
     <div className="space-y-10">
@@ -123,34 +126,39 @@ const DashboardPage = async () => {
           </Link>
         </div>
         {currentMetrics ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[{
-              label: "Revenus du mois",
-              value: formatCurrency(currentMetrics.income),
-              helper: "Salaires cumulés",
-            },
-            {
-              label: "Charges prévues",
-              value: formatCurrency(currentMetrics.expenses),
-              helper: "Toutes catégories",
-            },
-            {
-              label: "Budgets actifs",
-              value: formatCurrency(currentMetrics.budgets),
-              helper: `Enveloppes de ${monthLabel}`,
-            },
-            {
-              label: "Solde prévisionnel",
-              value: formatCurrency(currentMetrics.balance),
-              helper: currentMetrics.balance >= 0 ? "Excédent" : "Déficit",
-            }].map((card) => (
-              <div key={card.label} className="rounded-2xl border border-white/5 bg-white/[0.04] p-4">
-                <p className="text-xs uppercase tracking-[0.25rem] text-slate-500">{card.label}</p>
-                <p className="mt-3 text-2xl font-semibold text-white">{card.value}</p>
-                <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
-              </div>
-            ))}
-          </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+              {[{
+                label: "Revenus du mois",
+                value: formatCurrency(currentMetrics.income),
+                helper: "Salaires cumulés",
+              },
+              {
+                label: "Charges prévues",
+                value: formatCurrency(currentMetrics.expenses),
+                helper: "Toutes catégories",
+              },
+              {
+                label: "Budgets actifs",
+                value: formatCurrency(currentMetrics.budgets),
+                helper: `Enveloppes de ${monthLabel}`,
+              },
+              {
+                label: "Solde prévisionnel",
+                value: formatCurrency(currentMetrics.balance),
+                helper: currentMetrics.balance >= 0 ? "Excédent" : "Déficit",
+              },
+              {
+                label: "Taux d'épargne",
+                value: `${savingsRate.toFixed(1)} %`,
+                helper: savingsRate >= 20 ? "Objectif atteint" : "Cible : 20 %",
+              }].map((card) => (
+                <div key={card.label} className="rounded-2xl border border-white/5 bg-white/[0.04] p-4">
+                  <p className="text-xs uppercase tracking-[0.25rem] text-slate-500">{card.label}</p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{card.value}</p>
+                  <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
+                </div>
+              ))}
+            </div>
         ) : (
           <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-sm text-slate-400">
             Créez une nouvelle fiche pour le mois en cours afin de suivre vos salaires, charges et budgets en temps réel.

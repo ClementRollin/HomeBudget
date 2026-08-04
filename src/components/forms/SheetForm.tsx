@@ -220,71 +220,52 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
       >
 
         {salaryFields.map((field, index) => (
-
           <div
-
             key={field.id}
-
             className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-4"
-
           >
-
-            <select
-
-              {...form.register(`salaries.${index}.person` as const)}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            >
-
-              {people.map((person) => (
-
-                <option key={person} value={person}>
-
-                  {person}
-
-                </option>
-
-              ))}
-
-            </select>
-
-            <input
-              placeholder="Libellé"
-              {...form.register(`salaries.${index}.label` as const)}
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-            />
-
-            <input
-
-              type="number"
-
-              step="0.01"
-
-              placeholder="Montant"
-
-              {...form.register(`salaries.${index}.amount` as const, { valueAsNumber: true })}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            />
-
+            <div>
+              <label htmlFor={`salaries-${index}-person`} className="sr-only">Membre</label>
+              <select
+                id={`salaries-${index}-person`}
+                {...form.register(`salaries.${index}.person` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              >
+                {people.map((person) => (
+                  <option key={person} value={person}>
+                    {person}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor={`salaries-${index}-label`} className="sr-only">Libellé</label>
+              <input
+                id={`salaries-${index}-label`}
+                placeholder="Libellé"
+                {...form.register(`salaries.${index}.label` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label htmlFor={`salaries-${index}-amount`} className="sr-only">Montant</label>
+              <input
+                id={`salaries-${index}-amount`}
+                type="number"
+                step="0.01"
+                placeholder="Montant"
+                {...form.register(`salaries.${index}.amount` as const, { valueAsNumber: true })}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
             <button
-
               type="button"
-
               className="text-left text-sm text-rose-400"
-
               onClick={() => removeSalary(index)}
-
             >
-
               Supprimer
-
             </button>
-
           </div>
-
         ))}
 
       </DynamicFieldSection>
@@ -316,81 +297,61 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
       >
 
         {chargeFields.map((field, index) => (
-
           <div
-
             key={field.id}
-
             className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-5"
-
           >
-
-            <select
-
-              {...form.register(`charges.${index}.type` as const)}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            >
-
-              {CHARGE_TYPES.map((type) => (
-
-                <option key={type} value={type}>
-
-                  {CHARGE_TYPE_LABELS[type]}
-
-                </option>
-
-              ))}
-
-            </select>
-
-            <input
-
-              placeholder="Personne (optionnel)"
-
-              {...form.register(`charges.${index}.person` as const)}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            />
-
-            <input
-              placeholder="Libellé"
-              {...form.register(`charges.${index}.label` as const)}
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-            />
-
-            <input
-
-              type="number"
-
-              step="0.01"
-
-              placeholder="Montant"
-
-              {...form.register(`charges.${index}.amount` as const, { valueAsNumber: true })}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            />
-
+            <div>
+              <label htmlFor={`charges-${index}-type`} className="sr-only">Type</label>
+              <select
+                id={`charges-${index}-type`}
+                {...form.register(`charges.${index}.type` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              >
+                {CHARGE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {CHARGE_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor={`charges-${index}-person`} className="sr-only">Personne</label>
+              <input
+                id={`charges-${index}-person`}
+                placeholder="Personne (optionnel)"
+                {...form.register(`charges.${index}.person` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label htmlFor={`charges-${index}-label`} className="sr-only">Libellé</label>
+              <input
+                id={`charges-${index}-label`}
+                placeholder="Libellé"
+                {...form.register(`charges.${index}.label` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label htmlFor={`charges-${index}-amount`} className="sr-only">Montant</label>
+              <input
+                id={`charges-${index}-amount`}
+                type="number"
+                step="0.01"
+                placeholder="Montant"
+                {...form.register(`charges.${index}.amount` as const, { valueAsNumber: true })}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
             <button
-
               type="button"
-
               className="text-left text-sm text-rose-400"
-
               onClick={() => removeCharge(index)}
-
             >
-
               Supprimer
-
             </button>
-
           </div>
-
         ))}
 
       </DynamicFieldSection>
@@ -408,51 +369,38 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
       >
 
         {budgetFields.map((field, index) => (
-
           <div
-
             key={field.id}
-
             className="grid gap-4 rounded-2xl border border-white/5 p-4 md:grid-cols-[2fr_1fr_auto]"
-
           >
-
-            <input
-              placeholder="Libellé"
-              {...form.register(`budgets.${index}.label` as const)}
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-            />
-
-            <input
-
-              type="number"
-
-              step="0.01"
-
-              placeholder="Montant"
-
-              {...form.register(`budgets.${index}.amount` as const, { valueAsNumber: true })}
-
-              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2"
-
-            />
-
+            <div>
+              <label htmlFor={`budgets-${index}-label`} className="sr-only">Libellé</label>
+              <input
+                id={`budgets-${index}-label`}
+                placeholder="Libellé"
+                {...form.register(`budgets.${index}.label` as const)}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label htmlFor={`budgets-${index}-amount`} className="sr-only">Montant</label>
+              <input
+                id={`budgets-${index}-amount`}
+                type="number"
+                step="0.01"
+                placeholder="Montant"
+                {...form.register(`budgets.${index}.amount` as const, { valueAsNumber: true })}
+                className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2"
+              />
+            </div>
             <button
-
               type="button"
-
               className="text-left text-sm text-rose-400"
-
               onClick={() => removeBudget(index)}
-
             >
-
               Supprimer
-
             </button>
-
           </div>
-
         ))}
 
       </DynamicFieldSection>
@@ -462,16 +410,21 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
       <div className="flex flex-wrap items-center gap-4">
 
         <button
-
           type="submit"
-
           disabled={isSubmitting}
-
-          className="rounded-2xl bg-accent px-6 py-3 text-sm font-semibold uppercase tracking-widest text-slate-900 transition hover:bg-teal-300 disabled:opacity-50"
-
+          className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-semibold uppercase tracking-widest text-slate-900 transition hover:bg-teal-300 disabled:opacity-50"
         >
-
-          {sheetId ? "Mettre à jour" : "Créer la fiche"}
+          {isSubmitting ? (
+            <>
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Enregistrement...
+            </>
+          ) : (
+            sheetId ? "Mettre à jour" : "Créer la fiche"
+          )}
         </button>
 
         {sheetId ? (

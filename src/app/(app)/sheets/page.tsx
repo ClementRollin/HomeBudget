@@ -1,17 +1,19 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { formatCurrency } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { computeSheetMetrics, decryptSheet, getMonthLabel } from "@/lib/sheets";
+import { computeSheetMetrics, decryptSheet, getCurrentPeriod, getMonthLabel } from "@/lib/sheets";
 import type { SecureSheet } from "@/lib/sheets";
 import { getCurrentSession } from "@/lib/auth";
 
-const SheetsPage = async () => {
+const SheetsPage = async ({ searchParams }: { searchParams: Promise<{ year?: string }> }) => {
   const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/");
   }
+
+  const { year: yearParam } = await searchParams;
 
   const secureSheets = (await prisma.sheet.findMany({
     include: {
@@ -27,6 +29,12 @@ const SheetsPage = async () => {
   })) as SecureSheet[];
 
   const sheets = secureSheets.map(decryptSheet);
+
+  const allYears = Array.from(new Set(sheets.map(s => s.year))).sort((a, b) => b - a);
+  const selectedYear = yearParam ? parseInt(yearParam, 10) : null;
+  const filteredSheets = selectedYear ? sheets.filter(s => s.year === selectedYear) : sheets;
+
+  const period = getCurrentPeriod();
 
   return (
     <div className="space-y-8">
@@ -46,6 +54,27 @@ const SheetsPage = async () => {
         </Link>
       </div>
 
+      {/* Filtre par années */}
+      {allYears.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/sheets"
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${!selectedYear ? "bg-accent text-slate-900" : "border border-white/10 text-slate-400 hover:text-white"}`}
+          >
+            Toutes
+          </Link>
+          {allYears.map(y => (
+            <Link
+              key={y}
+              href={`/sheets?year=${y}`}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedYear === y ? "bg-accent text-slate-900" : "border border-white/10 text-slate-400 hover:text-white"}`}
+            >
+              {y}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-3xl border border-white/5 bg-black/30">
         <table className="min-w-full text-left text-sm">
           <thead className="text-xs uppercase tracking-widest text-slate-400">
@@ -59,19 +88,25 @@ const SheetsPage = async () => {
             </tr>
           </thead>
           <tbody>
-            {sheets.length === 0 && (
+            {filteredSheets.length === 0 && (
               <tr>
                 <td className="px-6 py-8 text-center text-slate-400" colSpan={6}>
-                  Pas encore de fiches de compte créées.
+                  {selectedYear ? `Aucune fiche pour ${selectedYear}.` : "Pas encore de fiches de compte créées."}
                 </td>
               </tr>
             )}
-            {sheets.map((sheet) => {
+            {filteredSheets.map((sheet) => {
               const metrics = computeSheetMetrics(sheet);
+              const isPast = sheet.year < period.year || (sheet.year === period.year && sheet.month < period.month);
               return (
                 <tr key={sheet.id} className="border-t border-white/5">
                   <td className="px-6 py-4 font-semibold text-white">
-                    {getMonthLabel(sheet.month, sheet.year)}
+                    <span>{getMonthLabel(sheet.month, sheet.year)}</span>
+                    {isPast && (
+                      <span className="ml-2 rounded-full border border-slate-600 px-2 py-0.5 text-xs font-normal text-slate-400">
+                        Archivée
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-slate-300">
                     {formatCurrency(metrics.income)}
