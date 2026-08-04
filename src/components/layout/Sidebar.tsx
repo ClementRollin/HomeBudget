@@ -11,6 +11,7 @@ const links = [
   { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
   { href: "/patrimoine", label: "Patrimoine" },
+  { href: "/fiscalite", label: "Fiscalité" },
 ];
 
 const Sidebar = ({
@@ -41,6 +42,9 @@ const Sidebar = ({
     }
     if (href === "/patrimoine") {
       return pathname === "/patrimoine";
+    }
+    if (href === "/fiscalite") {
+      return pathname === "/fiscalite";
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };

@@ -20,6 +20,7 @@ model Family {
   assets      Asset[]
   debts       Debt[]
   goals       PatrimonialGoal[]
+  fiscalConfig FiscalConfig?
 }
 
 model Invitation {
@@ -150,6 +151,15 @@ model Asset {
   snapshots              AssetSnapshot[]
 
   @@index([familyId])
+}
+
+model FiscalConfig {
+  id                        String   @id @default(cuid())
+  family                    Family   @relation(fields: [familyId], references: [id])
+  familyId                  String   @unique
+  isCoupled                 Boolean  @default(false)
+  encryptedPerContribYTD    String   @default("")
+  updatedAt                 DateTime @updatedAt
 }
 
 model AssetSnapshot {
