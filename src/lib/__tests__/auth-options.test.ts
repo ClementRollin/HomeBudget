@@ -1,15 +1,25 @@
 /**
- * Tests TDD pour la suppression de familyInviteCode du JWT/session.
- *
- * Comportement attendu (post-fix) :
+ * Tests pour la config auth v5 :
  *   - jwt callback : ne doit PAS écrire familyInviteCode sur le token
  *   - session callback : ne doit PAS exposer familyInviteCode sur session.user
- *   - authorize : ne doit PAS retourner familyInviteCode dans l'objet utilisateur
+ *   - credentialsAuthorize : ne doit PAS retourner familyInviteCode
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// --- mocks déclarés avant tout import du module testé ---
+vi.mock('next-auth', () => ({
+  default: () => ({
+    handlers: { GET: vi.fn(), POST: vi.fn() },
+    auth: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}))
+
+vi.mock('next-auth/providers/credentials', () => ({
+  default: (opts: { authorize: (c: unknown) => unknown }) => ({ options: { authorize: opts.authorize } }),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -26,48 +36,16 @@ vi.mock('@/lib/members', () => ({
   ensureMemberForUser: vi.fn(),
 }))
 
-// Import APRÈS les mocks
-import { authOptions } from '@/lib/auth-options'
+import { authConfig, credentialsAuthorize } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { compare } from 'bcryptjs'
 import { ensureMemberForUser } from '@/lib/members'
 
-// Typage pour accéder aux callbacks
-type JwtCallback = NonNullable<NonNullable<typeof authOptions.callbacks>['jwt']>
-type SessionCallback = NonNullable<NonNullable<typeof authOptions.callbacks>['session']>
+const jwtCallback = authConfig.callbacks.jwt
+const sessionCallback = authConfig.callbacks.session
 
-const jwtCallback = authOptions.callbacks!.jwt! as JwtCallback
-const sessionCallback = authOptions.callbacks!.session! as SessionCallback
-
-// Accès au provider Credentials (index 0)
-const credentialsProvider = authOptions.providers[0] as {
-  options: { authorize: (credentials: Record<string, string>) => Promise<unknown> }
-}
-const authorize = credentialsProvider.options.authorize
-
-describe('auth-options — jwt callback', () => {
+describe('auth — jwt callback', () => {
   it('should NOT set familyInviteCode on token', async () => {
-    const userWithInviteCode = {
-      id: 'user-1',
-      email: 'test@example.com',
-      name: 'Test User',
-      familyId: 'family-1',
-      familyName: 'Les Dupont',
-      familyInviteCode: 'SECRET_CODE',
-      familyMemberId: 'member-1',
-    }
-
-    const token = await jwtCallback({
-      token: {},
-      user: userWithInviteCode as never,
-      account: null,
-      trigger: 'signIn',
-    })
-
-    expect(token.familyInviteCode).toBeUndefined()
-  })
-
-  it('should still set familyId, familyName, and familyMemberId on token', async () => {
     const user = {
       id: 'user-1',
       email: 'test@example.com',
@@ -78,12 +56,21 @@ describe('auth-options — jwt callback', () => {
       familyMemberId: 'member-1',
     }
 
-    const token = await jwtCallback({
-      token: {},
-      user: user as never,
-      account: null,
-      trigger: 'signIn',
-    })
+    const token = await jwtCallback({ token: {}, user: user as never })
+
+    expect((token as Record<string, unknown>).familyInviteCode).toBeUndefined()
+  })
+
+  it('should still set familyId, familyName, and familyMemberId on token', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'test@example.com',
+      familyId: 'family-1',
+      familyName: 'Les Dupont',
+      familyMemberId: 'member-1',
+    }
+
+    const token = await jwtCallback({ token: {}, user: user as never }) as Record<string, unknown>
 
     expect(token.familyId).toBe('family-1')
     expect(token.familyName).toBe('Les Dupont')
@@ -91,9 +78,9 @@ describe('auth-options — jwt callback', () => {
   })
 })
 
-describe('auth-options — session callback', () => {
+describe('auth — session callback', () => {
   it('should NOT expose familyInviteCode on session.user', async () => {
-    const tokenWithInviteCode = {
+    const token = {
       id: 'user-1',
       familyId: 'family-1',
       familyName: 'Les Dupont',
@@ -101,15 +88,10 @@ describe('auth-options — session callback', () => {
       familyMemberId: 'member-1',
     }
 
-    const session = await (sessionCallback as (args: unknown) => Promise<unknown>)({
-      session: {
-        user: { name: 'Test', email: 'test@example.com', image: null },
-        expires: '2099-01-01',
-      },
-      token: tokenWithInviteCode,
-      newSession: undefined,
-      trigger: 'update',
-    }) as { user?: Record<string, unknown> }
+    const session = await sessionCallback({
+      session: { user: { name: 'Test', email: 'test@example.com', image: null }, expires: '2099-01-01' },
+      token: token as never,
+    } as never) as { user?: Record<string, unknown> }
 
     expect(session.user?.familyInviteCode).toBeUndefined()
   })
@@ -119,19 +101,13 @@ describe('auth-options — session callback', () => {
       id: 'user-1',
       familyId: 'family-1',
       familyName: 'Les Dupont',
-      familyInviteCode: 'SECRET_CODE',
       familyMemberId: 'member-1',
     }
 
-    const session = await (sessionCallback as (args: unknown) => Promise<unknown>)({
-      session: {
-        user: { name: 'Test', email: 'test@example.com', image: null },
-        expires: '2099-01-01',
-      },
-      token: token,
-      newSession: undefined,
-      trigger: 'update',
-    }) as { user?: Record<string, unknown> }
+    const session = await sessionCallback({
+      session: { user: { name: 'Test', email: 'test@example.com', image: null }, expires: '2099-01-01' },
+      token: token as never,
+    } as never) as { user?: Record<string, unknown> }
 
     expect(session.user?.familyId).toBe('family-1')
     expect(session.user?.familyName).toBe('Les Dupont')
@@ -139,7 +115,7 @@ describe('auth-options — session callback', () => {
   })
 })
 
-describe('auth-options — authorize', () => {
+describe('auth — credentialsAuthorize', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -153,23 +129,14 @@ describe('auth-options — authorize', () => {
       familyId: 'family-1',
       createdAt: new Date(),
       updatedAt: new Date(),
-      family: {
-        id: 'family-1',
-        name: 'Les Dupont',
-        slug: 'les-dupont',
-        inviteCode: 'TESTCODE',
-        createdAt: new Date(),
-      },
+      family: { id: 'family-1', name: 'Les Dupont', slug: 'les-dupont', inviteCode: 'TESTCODE', createdAt: new Date() },
     }
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
     vi.mocked(compare as ReturnType<typeof vi.fn>).mockResolvedValue(true)
     vi.mocked(ensureMemberForUser).mockResolvedValue({ id: 'member-1' } as never)
 
-    const result = await authorize({
-      email: 'test@example.com',
-      password: 'password123',
-    }) as Record<string, unknown> | null
+    const result = await credentialsAuthorize({ email: 'test@example.com', password: 'password123' }) as Record<string, unknown> | null
 
     expect(result).not.toBeNull()
     expect(result).not.toHaveProperty('familyInviteCode')
@@ -184,23 +151,14 @@ describe('auth-options — authorize', () => {
       familyId: 'family-1',
       createdAt: new Date(),
       updatedAt: new Date(),
-      family: {
-        id: 'family-1',
-        name: 'Les Dupont',
-        slug: 'les-dupont',
-        inviteCode: 'TESTCODE',
-        createdAt: new Date(),
-      },
+      family: { id: 'family-1', name: 'Les Dupont', slug: 'les-dupont', inviteCode: 'TESTCODE', createdAt: new Date() },
     }
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as never)
     vi.mocked(compare as ReturnType<typeof vi.fn>).mockResolvedValue(true)
     vi.mocked(ensureMemberForUser).mockResolvedValue({ id: 'member-1' } as never)
 
-    const result = await authorize({
-      email: 'test@example.com',
-      password: 'password123',
-    }) as Record<string, unknown> | null
+    const result = await credentialsAuthorize({ email: 'test@example.com', password: 'password123' }) as Record<string, unknown> | null
 
     expect(result).not.toBeNull()
     expect(result?.familyId).toBe('family-1')
