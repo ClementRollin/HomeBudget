@@ -8,7 +8,7 @@ import { ensureMemberForUser } from "@/lib/members";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8),
 });
 
 type AppUser = {

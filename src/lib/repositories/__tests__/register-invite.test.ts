@@ -230,3 +230,44 @@ describe('POST /api/auth/register — validation inviteCode', () => {
     expect(body.message).toBe('Payload invalide')
   })
 })
+
+describe('POST /api/auth/register — validation mot de passe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+  })
+
+  it('should return 400 when password has fewer than 8 characters', async () => {
+    const res = await POST(buildRequest({
+      mode: 'create',
+      name: 'Alice',
+      email: 'alice@example.com',
+      password: '1234567', // 7 chars — below the 8-char minimum
+      familyName: 'Famille Test',
+    }))
+
+    expect(res.status).toBe(400)
+  })
+
+  it('should accept a password with exactly 8 characters', async () => {
+    // Mock a valid create-family flow to verify 8-char passwords pass validation
+    vi.mocked(prisma.family.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.family.create).mockResolvedValue({
+      id: 'fam-1', name: 'Famille Test', slug: 'famille-test', inviteCode: 'CODE1234', createdAt: new Date(),
+    } as never)
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      id: 'user-1', name: 'Alice', email: 'alice@example.com', password: 'hashed', familyId: 'fam-1', createdAt: new Date(), updatedAt: new Date(),
+    } as never)
+    vi.mocked(prisma.invitation.create).mockResolvedValue({} as never)
+
+    const res = await POST(buildRequest({
+      mode: 'create',
+      name: 'Alice',
+      email: 'alice@example.com',
+      password: '12345678', // exactly 8 chars — must be accepted
+      familyName: 'Famille Test',
+    }))
+
+    expect(res.status).toBe(200)
+  })
+})

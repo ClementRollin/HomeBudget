@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 const baseFields = {
   name: z.string().min(2, "Nom requis"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "6 caractères minimum"),
+  password: z.string().min(8, "8 caractères minimum"),
 };
 
 const registerSchema = z.discriminatedUnion("mode", [
