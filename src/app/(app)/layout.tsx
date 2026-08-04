@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCurrentPeriod } from "@/lib/sheets";
 
 const AppLayout = async ({ children }: { children: ReactNode }) => {
   const session = await getCurrentSession();
@@ -21,8 +22,10 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
     console.warn(`[AppLayout] Family not found for familyId=${session.user.familyId} — data integrity issue`);
   }
 
+  const currentPeriod = getCurrentPeriod();
+
   return (
-    <AppShell session={session} familyInviteCode={family?.inviteCode ?? undefined}>
+    <AppShell session={session} familyInviteCode={family?.inviteCode ?? undefined} currentPeriod={currentPeriod}>
       {children}
     </AppShell>
   );

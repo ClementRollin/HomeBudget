@@ -3,18 +3,20 @@
 import type { Session } from "next-auth";
 
 import SignOutButton from "@/components/auth/SignOutButton";
-import { getCurrentPeriod, getMonthLabel } from "@/lib/sheets";
+import { getMonthLabel } from "@/lib/sheets";
 
 const Header = ({
   session,
   familyInviteCode,
+  currentPeriod,
   onToggleSidebar,
 }: {
   session: Session;
   familyInviteCode?: string;
+  currentPeriod: { month: number; year: number };
   onToggleSidebar: () => void;
 }) => {
-  const { month, year } = getCurrentPeriod();
+  const { month, year } = currentPeriod;
   const firstName = session?.user?.name?.split(" ")[0] ?? "HomeBudget";
   const familyName = session?.user?.familyName ?? "Famille";
 
