@@ -1,6 +1,5 @@
 import { compare } from "bcryptjs";
-import NextAuth from "next-auth";
-import type { User } from "next-auth";
+import NextAuth, { type NextAuthConfig, type User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
@@ -39,8 +38,8 @@ export const credentialsAuthorize = async (
   } as User;
 };
 
-export const authConfig = {
-  session: { strategy: "jwt" as const },
+export const authConfig: NextAuthConfig = {
+  session: { strategy: "jwt" },
   pages: { signIn: "/" },
   providers: [
     Credentials({
@@ -53,22 +52,16 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: { token: Record<string, unknown>; user?: User }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.familyId = (user as Record<string, unknown>).familyId;
-        token.familyName = (user as Record<string, unknown>).familyName;
-        token.familyMemberId = (user as Record<string, unknown>).familyMemberId;
+        token.familyId = user.familyId;
+        token.familyName = user.familyName;
+        token.familyMemberId = user.familyMemberId;
       }
       return token;
     },
-    async session({
-      session,
-      token,
-    }: {
-      session: Record<string, unknown> & { user?: Record<string, unknown> };
-      token: Record<string, unknown>;
-    }) {
+    async session({ session, token }) {
       if (session.user && token?.id) {
         session.user.id = token.id as string;
         session.user.familyId = token.familyId as string;

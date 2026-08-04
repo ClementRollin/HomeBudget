@@ -41,8 +41,8 @@ import { prisma } from '@/lib/prisma'
 import { compare } from 'bcryptjs'
 import { ensureMemberForUser } from '@/lib/members'
 
-const jwtCallback = authConfig.callbacks.jwt
-const sessionCallback = authConfig.callbacks.session
+const jwtCallback = authConfig.callbacks!.jwt!
+const sessionCallback = authConfig.callbacks!.session!
 
 describe('auth — jwt callback', () => {
   it('should NOT set familyInviteCode on token', async () => {
