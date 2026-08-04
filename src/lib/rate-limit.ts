@@ -1,7 +1,19 @@
 type RateLimitEntry = { count: number; resetAt: number };
 
+// In-memory: resets on cold-start, not shared across multiple serverless instances.
 export const createRateLimiter = (options: { limit: number; windowMs: number }) => {
   const store = new Map<string, RateLimitEntry>();
+
+  // Evict expired entries once per window to prevent unbounded Map growth.
+  const sweep = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (now >= entry.resetAt) store.delete(key);
+    }
+  }, options.windowMs);
+
+  // Allow GC when the limiter is no longer needed (e.g. in tests).
+  if (typeof sweep.unref === "function") sweep.unref();
 
   return {
     check(key: string): { ok: true } | { ok: false; retryAfterMs: number } {
