@@ -12,6 +12,7 @@ const links = [
   { href: "/sheets", label: "Historique" },
   { href: "/patrimoine", label: "Patrimoine" },
   { href: "/fiscalite", label: "Fiscalité" },
+  { href: "/bilan", label: "Bilan CFO" },
 ];
 
 const Sidebar = ({
