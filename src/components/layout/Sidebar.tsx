@@ -6,13 +6,27 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MONTH_NAMES } from "@/lib/sheets";
 
-const links = [
+type NavLink = {
+  href: string;
+  label: string;
+  subItems?: Array<{ href: string; label: string }>;
+};
+
+const links: NavLink[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
   { href: "/patrimoine", label: "Patrimoine" },
-  { href: "/fiscalite", label: "Fiscalité" },
+  {
+    href: "/fiscalite",
+    label: "Fiscalité",
+    subItems: [
+      { href: "/fiscalite/declaration", label: "Déclaration 2042" },
+    ],
+  },
+  { href: "/family", label: "Famille" },
   { href: "/bilan", label: "Bilan CFO" },
+  { href: "/settings", label: "Paramètres" },
 ];
 
 const Sidebar = ({
@@ -47,8 +61,15 @@ const Sidebar = ({
     if (href === "/fiscalite") {
       return pathname === "/fiscalite";
     }
+    if (href === "/fiscalite/declaration") {
+      return pathname === "/fiscalite/declaration";
+    }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
+
+  // Fiscalité est parent actif si on est dans /fiscalite ou sous-pages
+  const isFiscaliteParentActive =
+    pathname === "/fiscalite" || (pathname?.startsWith("/fiscalite/") ?? false);
 
   const sidebarContent = (
     <>
@@ -57,20 +78,47 @@ const Sidebar = ({
         <p className="text-2xl font-semibold text-white">HomeBudget</p>
         <p className="text-slate-400">Gestion mensuelle partagée</p>
       </div>
-      <nav className="space-y-2 text-base font-medium">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            onClick={onClose}
-            className={cn(
-              "block rounded-xl px-4 py-2 hover:bg-white/10",
-              isActive(link.href) ? "bg-white/10 text-white" : "text-slate-400",
-            )}
-          >
-            {link.label}
-          </Link>
-        ))}
+      <nav className="space-y-1 text-base font-medium">
+        {links.map((link) => {
+          const hasSubItems = link.subItems && link.subItems.length > 0;
+          const parentActive =
+            link.href === "/fiscalite"
+              ? isFiscaliteParentActive
+              : isActive(link.href);
+
+          return (
+            <div key={link.href}>
+              <Link
+                href={link.href}
+                onClick={onClose}
+                className={cn(
+                  "block rounded-xl px-4 py-2 hover:bg-white/10",
+                  parentActive ? "bg-white/10 text-white" : "text-slate-400",
+                )}
+              >
+                {link.label}
+              </Link>
+              {/* Sous-items — affichés si le parent est actif */}
+              {hasSubItems && parentActive && (
+                <div className="ml-4 mt-1 space-y-1 border-l border-white/5 pl-3">
+                  {link.subItems!.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      onClick={onClose}
+                      className={cn(
+                        "block rounded-lg px-3 py-1.5 text-sm hover:bg-white/10",
+                        isActive(sub.href) ? "text-white" : "text-slate-500",
+                      )}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
       <div className="mt-auto rounded-xl border border-dashed border-slate-700 p-4 text-xs">
         {hasCurrentSheet ? (
