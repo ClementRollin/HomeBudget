@@ -11,9 +11,11 @@ import {
   type SheetWithSalaries,
 } from "@/lib/fiscalite";
 import { prisma } from "@/lib/prisma";
+import { getFamilySubscription, getActivePlan } from "@/lib/subscription";
 import TaxDocumentUploader from "@/components/fiscalite/TaxDocumentUploader";
 import ExtractedCasesEditor from "@/components/fiscalite/ExtractedCasesEditor";
 import Declaration2042Table from "@/components/fiscalite/Declaration2042Table";
+import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 type TaxDocumentRow = {
   id: string;
@@ -35,7 +37,7 @@ const DeclarationPage = async () => {
   const familyId = session.user.familyId;
 
   // Récupérer toutes les données en parallèle
-  const [rawDocuments, rawSheets, rawMembers, fiscalConfig, previousDocs] = await Promise.all([
+  const [rawDocuments, rawSheets, rawMembers, fiscalConfig, previousDocs, sub] = await Promise.all([
     // Documents fiscaux de l'année courante
     prisma.taxDocument.findMany({
       where: { familyId, taxYear },
@@ -67,7 +69,11 @@ const DeclarationPage = async () => {
       orderBy: { validatedAt: "desc" },
       take: 1,
     }),
+    getFamilySubscription(familyId),
   ]);
+
+  const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
+  const hasN1Data = previousDocs.length > 0 && !!previousDocs[0].encryptedExtractedCases;
 
   // Décrypter et mapper les documents fiscaux
   const documents: TaxDocumentRow[] = rawDocuments.map((doc) => ({
@@ -127,9 +133,9 @@ const DeclarationPage = async () => {
     ? decryptNumber(fiscalConfig.encryptedRentalIncome)
     : 0;
 
-  // Cases de l'année N-1
+  // Cases de l'année N-1 (PRO uniquement)
   let previousYearCases: Record<string, number> | undefined;
-  if (previousDocs.length > 0 && previousDocs[0].encryptedExtractedCases) {
+  if (plan === "PRO" && previousDocs.length > 0 && previousDocs[0].encryptedExtractedCases) {
     try {
       previousYearCases = JSON.parse(
         decryptValue(previousDocs[0].encryptedExtractedCases)
@@ -253,6 +259,15 @@ const DeclarationPage = async () => {
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Comparaison N-1 — gate PRO */}
+      {plan === "FREE" && hasN1Data && (
+        <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+          <UpgradeGate plan={plan} feature="Comparaison N-1 sur votre déclaration">
+            {null}
+          </UpgradeGate>
         </section>
       )}
 
