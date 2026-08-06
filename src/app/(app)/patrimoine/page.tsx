@@ -134,7 +134,7 @@ const PatrimoinePage = async () => {
       <DebtTracker initialDebts={debts} plan={plan} />
 
       {/* Objectifs */}
-      <GoalManager initialGoals={goals} plan={plan} />
+      <GoalManager initialGoals={goals} plan={plan} netWorth={patrimoineNet} />
     </div>
   );
 };
