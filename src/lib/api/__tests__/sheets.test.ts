@@ -63,7 +63,7 @@ describe('serializeSheet', () => {
           encryptedLabel: 'enc:Salaire principal',
           encryptedAmount: 'enc:3000',
           createdAt: new Date('2024-01-15T10:00:00.000Z'),
-          member: { id: 'member-1', familyId: 'fam-1', userId: null, slug: 'moi', displayName: 'Moi', createdAt: new Date(), updatedAt: new Date() },
+          member: { id: 'member-1', familyId: 'fam-1', userId: null, slug: 'moi', displayName: 'Moi', birthDate: null, fiscalRole: 'DECLARANT_1' as const, isAlternateGuard: false, isDisabled: false, createdAt: new Date(), updatedAt: new Date() },
         },
       ],
     })

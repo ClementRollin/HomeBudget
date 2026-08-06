@@ -5,6 +5,7 @@ import { resolveFamilySession } from "@/lib/api/sheets";
 import { encryptValue, encryptNumber } from "@/lib/crypto";
 import { goalFormSchema } from "@/lib/validations/patrimoine";
 import { decryptGoal } from "@/lib/patrimoine";
+import { getFamilySubscription, getActivePlan, checkLimit } from "@/lib/subscription";
 
 export async function GET() {
   const auth = await resolveFamilySession();
@@ -21,6 +22,17 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const auth = await resolveFamilySession();
   if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+
+  const sub = await getFamilySubscription(auth.familyId);
+  const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
+  const goalCount = await prisma.patrimonialGoal.count({ where: { familyId: auth.familyId } });
+  const limitCheck = checkLimit(plan, "maxGoals", goalCount);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: "LIMIT_REACHED", limit: limitCheck.limit, resource: "goals" },
+      { status: 402 },
+    );
+  }
 
   const body = await request.json();
   const parsed = goalFormSchema.safeParse(body);
