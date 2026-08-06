@@ -30,6 +30,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     },
   });
 
+  const now = new Date();
+  await prisma.assetSnapshot.upsert({
+    where: { assetId_year_month: { assetId: id, year: now.getFullYear(), month: now.getMonth() + 1 } },
+    create: { assetId: id, year: now.getFullYear(), month: now.getMonth() + 1, encryptedValue: encryptNumber(currentValue) },
+    update: { encryptedValue: encryptNumber(currentValue) },
+  });
+
   return NextResponse.json(decryptAsset(asset));
 }
 
