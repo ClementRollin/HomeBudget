@@ -5,6 +5,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { decryptAsset, decryptDebt, decryptGoal } from "@/lib/patrimoine";
 import { formatCurrency } from "@/lib/format";
 import { ASSET_TYPE_LABELS } from "@/lib/validations/patrimoine";
+import { getFamilySubscription, getActivePlan } from "@/lib/subscription";
 import AssetManager from "@/components/patrimoine/AssetManager";
 import DebtTracker from "@/components/patrimoine/DebtTracker";
 import GoalManager from "@/components/patrimoine/GoalManager";
@@ -13,11 +14,14 @@ const PatrimoinePage = async () => {
   const session = await getCurrentSession();
   if (!session?.user) redirect("/");
 
-  const [rawAssets, rawDebts, rawGoals] = await Promise.all([
+  const [rawAssets, rawDebts, rawGoals, sub] = await Promise.all([
     prisma.asset.findMany({ where: { familyId: session.user.familyId }, orderBy: { createdAt: "desc" } }),
     prisma.debt.findMany({ where: { familyId: session.user.familyId }, orderBy: { createdAt: "desc" } }),
     prisma.patrimonialGoal.findMany({ where: { familyId: session.user.familyId }, orderBy: { horizon: "asc" } }),
+    getFamilySubscription(session.user.familyId),
   ]);
+
+  const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
 
   const assets = rawAssets.map(decryptAsset);
   const debts = rawDebts.map(decryptDebt);
@@ -95,13 +99,13 @@ const PatrimoinePage = async () => {
       )}
 
       {/* Actifs */}
-      <AssetManager initialAssets={assets} />
+      <AssetManager initialAssets={assets} plan={plan} />
 
       {/* Dettes */}
-      <DebtTracker initialDebts={debts} />
+      <DebtTracker initialDebts={debts} plan={plan} />
 
       {/* Objectifs */}
-      <GoalManager initialGoals={goals} />
+      <GoalManager initialGoals={goals} plan={plan} />
     </div>
   );
 };

@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/format";
 import type { GoalFormValues } from "@/lib/validations/patrimoine";
 import type { DecryptedGoal } from "@/lib/patrimoine";
+import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
+import LimitWarning from "@/components/subscription/LimitWarning";
+import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 const currentYear = new Date().getFullYear();
 
@@ -13,7 +16,7 @@ const defaultValues: GoalFormValues = {
   horizon: currentYear + 10,
 };
 
-const GoalManager = ({ initialGoals }: { initialGoals: DecryptedGoal[] }) => {
+const GoalManager = ({ initialGoals, plan }: { initialGoals: DecryptedGoal[]; plan: PlanName }) => {
   const router = useRouter();
   const [goals, setGoals] = useState(initialGoals);
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +54,10 @@ const GoalManager = ({ initialGoals }: { initialGoals: DecryptedGoal[] }) => {
       body: JSON.stringify(form),
     });
     setSaving(false);
+    if (res.status === 402) {
+      setShowForm(false);
+      return;
+    }
     if (!res.ok) {
       const e = await res.json().catch(() => null);
       setError(e?.message ?? "Erreur");
@@ -75,6 +82,9 @@ const GoalManager = ({ initialGoals }: { initialGoals: DecryptedGoal[] }) => {
     }
   };
 
+  const freeLimit = PLAN_LIMITS.FREE.maxGoals;
+  const atLimit = plan === "FREE" && goals.length >= freeLimit;
+
   return (
     <section className="rounded-3xl border border-white/5 bg-black/30 p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -84,14 +94,19 @@ const GoalManager = ({ initialGoals }: { initialGoals: DecryptedGoal[] }) => {
             {goals.length} objectif{goals.length !== 1 ? "s" : ""} enregistré{goals.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
-        >
-          + Ajouter un objectif
-        </button>
+        {atLimit ? (
+          <UpgradeGate plan={plan} feature="Objectifs illimités">{null}</UpgradeGate>
+        ) : (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          >
+            + Ajouter un objectif
+          </button>
+        )}
       </div>
+      <LimitWarning resource="objectifs" current={goals.length} limit={freeLimit} />
 
       {showForm && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">

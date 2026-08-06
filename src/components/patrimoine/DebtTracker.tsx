@@ -6,6 +6,9 @@ import { formatCurrency } from "@/lib/format";
 import type { DebtFormValues } from "@/lib/validations/patrimoine";
 import { simulateEarlyRepayment, type SimulationResult } from "@/lib/amortization";
 import type { DecryptedDebt } from "@/lib/patrimoine";
+import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
+import LimitWarning from "@/components/subscription/LimitWarning";
+import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 const defaultForm: DebtFormValues = {
   label: "",
@@ -15,7 +18,7 @@ const defaultForm: DebtFormValues = {
   endDate: "",
 };
 
-const DebtTracker = ({ initialDebts }: { initialDebts: DecryptedDebt[] }) => {
+const DebtTracker = ({ initialDebts, plan }: { initialDebts: DecryptedDebt[]; plan: PlanName }) => {
   const router = useRouter();
   const [debts, setDebts] = useState(initialDebts);
 
@@ -67,6 +70,10 @@ const DebtTracker = ({ initialDebts }: { initialDebts: DecryptedDebt[] }) => {
       body: JSON.stringify(form),
     });
     setSaving(false);
+    if (res.status === 402) {
+      setShowForm(false);
+      return;
+    }
     if (!res.ok) {
       const e = await res.json().catch(() => null);
       setFormError((e as { message?: string } | null)?.message ?? "Erreur");
@@ -117,6 +124,9 @@ const DebtTracker = ({ initialDebts }: { initialDebts: DecryptedDebt[] }) => {
     if (res.ok) router.refresh();
   };
 
+  const freeLimit = PLAN_LIMITS.FREE.maxDebts;
+  const atLimit = plan === "FREE" && debts.length >= freeLimit;
+
   return (
     <section className="rounded-3xl border border-white/5 bg-black/30 p-6 space-y-6">
       {/* En-tête */}
@@ -127,14 +137,19 @@ const DebtTracker = ({ initialDebts }: { initialDebts: DecryptedDebt[] }) => {
             {debts.length} dette{debts.length !== 1 ? "s" : ""} enregistrée{debts.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
-        >
-          + Ajouter une dette
-        </button>
+        {atLimit ? (
+          <UpgradeGate plan={plan} feature="Dettes illimitées">{null}</UpgradeGate>
+        ) : (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          >
+            + Ajouter une dette
+          </button>
+        )}
       </div>
+      <LimitWarning resource="dettes" current={debts.length} limit={freeLimit} />
 
       {/* Formulaire CRUD */}
       {showForm && (

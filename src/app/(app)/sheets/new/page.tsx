@@ -4,6 +4,9 @@ import SheetForm from "@/components/forms/SheetForm";
 import { getCurrentSession } from "@/lib/auth";
 import { buildPeopleOptions } from "@/lib/utils";
 import { fetchFamilyMembers } from "@/lib/sheets";
+import { prisma } from "@/lib/prisma";
+import { getFamilySubscription, getActivePlan, PLAN_LIMITS } from "@/lib/subscription";
+import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 const NewSheetPage = async () => {
   const session = await getCurrentSession();
@@ -11,7 +14,14 @@ const NewSheetPage = async () => {
     redirect("/");
   }
 
-  const members = await fetchFamilyMembers(session.user.familyId);
+  const [members, sub, sheetCount] = await Promise.all([
+    fetchFamilyMembers(session.user.familyId),
+    getFamilySubscription(session.user.familyId),
+    prisma.sheet.count({ where: { familyId: session.user.familyId } }),
+  ]);
+
+  const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
+  const atLimit = plan === "FREE" && sheetCount >= PLAN_LIMITS.FREE.maxSheets;
   const peopleOptions = buildPeopleOptions(members, session.user.familyMemberId);
 
   return (
@@ -23,7 +33,11 @@ const NewSheetPage = async () => {
           Renseignez salaires, charges et budgets pour anticiper votre trésorerie.
         </p>
       </div>
-      <SheetForm peopleOptions={peopleOptions} />
+      {atLimit ? (
+        <UpgradeGate plan={plan} feature="Fiches mensuelles illimitées">{null}</UpgradeGate>
+      ) : (
+        <SheetForm peopleOptions={peopleOptions} />
+      )}
     </div>
   );
 };
