@@ -51,5 +51,15 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  const now = new Date();
+  await prisma.assetSnapshot.create({
+    data: {
+      assetId: asset.id,
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      encryptedValue: encryptNumber(currentValue),
+    },
+  });
+
   return NextResponse.json(decryptAsset(asset), { status: 201 });
 }

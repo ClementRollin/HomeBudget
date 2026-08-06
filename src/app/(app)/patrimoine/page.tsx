@@ -3,22 +3,29 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth";
 import { decryptAsset, decryptDebt, decryptGoal } from "@/lib/patrimoine";
+import { decryptNumber } from "@/lib/crypto";
 import { formatCurrency } from "@/lib/format";
 import { ASSET_TYPE_LABELS } from "@/lib/validations/patrimoine";
+import { MONTH_NAMES } from "@/lib/sheets";
 import { getFamilySubscription, getActivePlan } from "@/lib/subscription";
 import AssetManager from "@/components/patrimoine/AssetManager";
 import DebtTracker from "@/components/patrimoine/DebtTracker";
 import GoalManager from "@/components/patrimoine/GoalManager";
+import PortfolioChart, { type PortfolioDataPoint } from "@/components/patrimoine/PortfolioChart";
 
 const PatrimoinePage = async () => {
   const session = await getCurrentSession();
   if (!session?.user) redirect("/");
 
-  const [rawAssets, rawDebts, rawGoals, sub] = await Promise.all([
+  const [rawAssets, rawDebts, rawGoals, sub, rawSnapshots] = await Promise.all([
     prisma.asset.findMany({ where: { familyId: session.user.familyId }, orderBy: { createdAt: "desc" } }),
     prisma.debt.findMany({ where: { familyId: session.user.familyId }, orderBy: { createdAt: "desc" } }),
     prisma.patrimonialGoal.findMany({ where: { familyId: session.user.familyId }, orderBy: { horizon: "asc" } }),
     getFamilySubscription(session.user.familyId),
+    prisma.assetSnapshot.findMany({
+      where: { asset: { familyId: session.user.familyId } },
+      orderBy: [{ year: "asc" }, { month: "asc" }],
+    }),
   ]);
 
   const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
@@ -26,6 +33,19 @@ const PatrimoinePage = async () => {
   const assets = rawAssets.map(decryptAsset);
   const debts = rawDebts.map(decryptDebt);
   const goals = rawGoals.map(decryptGoal);
+
+  // Agrégation des snapshots par (year, month)
+  const snapshotMap = new Map<string, number>();
+  for (const snap of rawSnapshots) {
+    const key = `${snap.year}-${String(snap.month).padStart(2, "0")}`;
+    snapshotMap.set(key, (snapshotMap.get(key) ?? 0) + decryptNumber(snap.encryptedValue));
+  }
+  const portfolioHistory: PortfolioDataPoint[] = [...snapshotMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, total]) => {
+      const [year, month] = key.split("-");
+      return { label: `${MONTH_NAMES[parseInt(month) - 1]?.slice(0, 3)} ${year}`, total };
+    });
 
   // Métriques de synthèse
   const totalPatrimoine = assets.reduce((sum, a) => sum + a.currentValue, 0);
@@ -75,6 +95,15 @@ const PatrimoinePage = async () => {
           ))}
         </div>
       </section>
+
+      {/* Évolution du patrimoine */}
+      {portfolioHistory.length >= 2 && (
+        <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+          <h2 className="mb-1 text-xl font-semibold text-white">Évolution du patrimoine</h2>
+          <p className="mb-6 text-sm text-slate-400">Valeur totale des actifs par mois (snapshots).</p>
+          <PortfolioChart data={portfolioHistory} />
+        </section>
+      )}
 
       {/* Répartition par type */}
       {assets.length > 0 && (
