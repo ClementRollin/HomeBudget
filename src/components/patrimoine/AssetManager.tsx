@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/format";
 import { ASSET_TYPES, ASSET_TYPE_LABELS, type AssetFormValues } from "@/lib/validations/patrimoine";
 import type { DecryptedAsset } from "@/lib/patrimoine";
+import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
+import LimitWarning from "@/components/subscription/LimitWarning";
+import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 const defaultValues: AssetFormValues = {
   type: "AUTRE",
@@ -13,7 +16,7 @@ const defaultValues: AssetFormValues = {
   annualFee: undefined,
 };
 
-const AssetManager = ({ initialAssets }: { initialAssets: DecryptedAsset[] }) => {
+const AssetManager = ({ initialAssets, plan }: { initialAssets: DecryptedAsset[]; plan: PlanName }) => {
   const router = useRouter();
   const [assets, setAssets] = useState(initialAssets);
   const [showForm, setShowForm] = useState(false);
@@ -53,6 +56,10 @@ const AssetManager = ({ initialAssets }: { initialAssets: DecryptedAsset[] }) =>
       body: JSON.stringify(form),
     });
     setSaving(false);
+    if (res.status === 402) {
+      setShowForm(false);
+      return;
+    }
     if (!res.ok) {
       const e = await res.json().catch(() => null);
       setError(e?.message ?? "Erreur");
@@ -73,6 +80,9 @@ const AssetManager = ({ initialAssets }: { initialAssets: DecryptedAsset[] }) =>
     }
   };
 
+  const freeLimit = PLAN_LIMITS.FREE.maxAssets;
+  const atLimit = plan === "FREE" && assets.length >= freeLimit;
+
   return (
     <section className="rounded-3xl border border-white/5 bg-black/30 p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -82,14 +92,19 @@ const AssetManager = ({ initialAssets }: { initialAssets: DecryptedAsset[] }) =>
             {assets.length} actif{assets.length !== 1 ? "s" : ""} enregistré{assets.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
-        >
-          + Ajouter un actif
-        </button>
+        {atLimit ? (
+          <UpgradeGate plan={plan} feature="Actifs patrimoniaux illimités">{null}</UpgradeGate>
+        ) : (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-2xl bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          >
+            + Ajouter un actif
+          </button>
+        )}
       </div>
+      <LimitWarning resource="actifs" current={assets.length} limit={freeLimit} />
 
       {showForm && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
