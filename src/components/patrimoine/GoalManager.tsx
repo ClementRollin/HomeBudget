@@ -16,7 +16,44 @@ const defaultValues: GoalFormValues = {
   horizon: currentYear + 10,
 };
 
-const GoalManager = ({ initialGoals, plan }: { initialGoals: DecryptedGoal[]; plan: PlanName }) => {
+type GoalProgress = {
+  pct: number;
+  gap: number;
+  yearsLeft: number;
+  monthlyRequired: number | null;
+  reached: boolean;
+};
+
+const computeProgress = (goal: DecryptedGoal, netWorth: number): GoalProgress => {
+  const pct = goal.target > 0 ? Math.min(100, (netWorth / goal.target) * 100) : 100;
+  const gap = Math.max(0, goal.target - netWorth);
+  const yearsLeft = Math.max(0, goal.horizon - currentYear);
+  const monthlyRequired = gap > 0 && yearsLeft > 0 ? gap / yearsLeft / 12 : null;
+  return { pct, gap, yearsLeft, monthlyRequired, reached: netWorth >= goal.target };
+};
+
+const ProgressBar = ({ pct }: { pct: number }) => {
+  const color =
+    pct >= 80 ? "bg-emerald-400" : pct >= 50 ? "bg-amber-400" : "bg-rose-400";
+  return (
+    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+      <div
+        className={`h-full rounded-full transition-all ${color}`}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+};
+
+const GoalManager = ({
+  initialGoals,
+  plan,
+  netWorth,
+}: {
+  initialGoals: DecryptedGoal[];
+  plan: PlanName;
+  netWorth: number;
+}) => {
   const router = useRouter();
   const [goals, setGoals] = useState(initialGoals);
   const [showForm, setShowForm] = useState(false);
@@ -34,11 +71,7 @@ const GoalManager = ({ initialGoals, plan }: { initialGoals: DecryptedGoal[]; pl
 
   const openEdit = (goal: DecryptedGoal) => {
     setEditId(goal.id);
-    setForm({
-      label: goal.label,
-      target: goal.target,
-      horizon: goal.horizon,
-    });
+    setForm({ label: goal.label, target: goal.target, horizon: goal.horizon });
     setShowForm(true);
     setError(null);
   };
@@ -54,16 +87,13 @@ const GoalManager = ({ initialGoals, plan }: { initialGoals: DecryptedGoal[]; pl
       body: JSON.stringify(form),
     });
     setSaving(false);
-    if (res.status === 402) {
-      setShowForm(false);
-      return;
-    }
+    if (res.status === 402) { setShowForm(false); return; }
     if (!res.ok) {
       const e = await res.json().catch(() => null);
-      setError(e?.message ?? "Erreur");
+      setError((e as { message?: string } | null)?.message ?? "Erreur");
       return;
     }
-    const saved: DecryptedGoal = await res.json();
+    const saved = await res.json() as DecryptedGoal;
     setGoals((prev) =>
       editId
         ? prev.map((g) => (g.id === editId ? saved : g)).sort((a, b) => a.horizon - b.horizon)
@@ -173,35 +203,67 @@ const GoalManager = ({ initialGoals, plan }: { initialGoals: DecryptedGoal[]; pl
         </p>
       )}
 
-      <div className="space-y-3">
-        {goals.map((goal) => (
-          <div
-            key={goal.id}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4"
-          >
-            <div>
-              <p className="font-semibold text-white">{goal.label}</p>
-              <p className="mt-1 text-xs text-slate-400">Horizon : {goal.horizon}</p>
+      <div className="space-y-4">
+        {goals.map((goal) => {
+          const progress = computeProgress(goal, netWorth);
+          return (
+            <div
+              key={goal.id}
+              className="rounded-2xl border border-white/5 bg-white/[0.03] px-5 py-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="font-semibold text-white">{goal.label}</p>
+                    {progress.reached && (
+                      <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                        Atteint
+                      </span>
+                    )}
+                    {!progress.reached && progress.yearsLeft <= 2 && progress.pct < 80 && (
+                      <span className="rounded-full bg-rose-400/15 px-2 py-0.5 text-xs font-semibold text-rose-400">
+                        Risque
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400">
+                    <span>Cible : <span className="text-emerald-300 font-medium">{formatCurrency(goal.target)}</span></span>
+                    <span>Horizon : <span className="text-white">{goal.horizon}</span></span>
+                    {!progress.reached && (
+                      <>
+                        <span>Restant : <span className="text-white">{formatCurrency(progress.gap)}</span></span>
+                        {progress.monthlyRequired !== null && (
+                          <span>Effort requis : <span className="text-amber-300 font-medium">{formatCurrency(progress.monthlyRequired)}/mois</span></span>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <ProgressBar pct={progress.pct} />
+                  <p className="mt-1 text-right text-xs text-slate-500">{progress.pct.toFixed(1)} %</p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(goal)}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(goal.id)}
+                    className="text-xs text-rose-400 hover:text-rose-300"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <p className="text-lg font-semibold text-emerald-300">{formatCurrency(goal.target)}</p>
-              <button
-                type="button"
-                onClick={() => openEdit(goal)}
-                className="text-xs text-slate-400 hover:text-white"
-              >
-                Modifier
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(goal.id)}
-                className="text-xs text-rose-400 hover:text-rose-300"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
