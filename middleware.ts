@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 
-const PUBLIC_ROUTES = ["/", "/auth/login", "/api/auth", "/api/auth/register"];
+const PUBLIC_ROUTES = ["/", "/auth/login", "/api/auth", "/api/auth/register", "/api/stripe/webhooks"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

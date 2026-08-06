@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth";
 import { decryptAsset } from "@/lib/patrimoine";
 import { decryptSheet, computeSheetMetrics, type SecureSheet } from "@/lib/sheets";
-import { computeFiscalSummary } from "@/lib/fiscalite";
+import { computeFiscalSummary, type FamilyMemberFiscal } from "@/lib/fiscalite";
 import { decryptNumber } from "@/lib/crypto";
 import { formatCurrency } from "@/lib/format";
 import FiscalConfigEditor from "@/components/fiscalite/FiscalConfigEditor";
+import QuotientFamilialCard from "@/components/fiscalite/QuotientFamilialCard";
 
 const includeConfig = {
   salaries: { include: { member: true } },
@@ -21,7 +22,7 @@ const FiscalitePage = async () => {
 
   const currentYear = new Date().getFullYear();
 
-  const [yearSheets, rawFiscalConfig, avRawAssets] = await Promise.all([
+  const [yearSheets, rawFiscalConfig, avRawAssets, familyMembers] = await Promise.all([
     prisma.sheet.findMany({
       where: { familyId: session.user.familyId, year: currentYear },
       include: includeConfig,
@@ -29,6 +30,10 @@ const FiscalitePage = async () => {
     prisma.fiscalConfig.findUnique({ where: { familyId: session.user.familyId } }),
     prisma.asset.findMany({
       where: { familyId: session.user.familyId, type: "ASSURANCE_VIE" },
+    }),
+    prisma.familyMember.findMany({
+      where: { familyId: session.user.familyId },
+      select: { fiscalRole: true, isAlternateGuard: true, isDisabled: true },
     }),
   ]);
 
@@ -47,6 +52,12 @@ const FiscalitePage = async () => {
     isCoupled,
     avAssets,
   });
+
+  const fiscalMembers: FamilyMemberFiscal[] = familyMembers.map((m) => ({
+    fiscalRole: m.fiscalRole as FamilyMemberFiscal["fiscalRole"],
+    isAlternateGuard: m.isAlternateGuard,
+    isDisabled: m.isDisabled,
+  }));
 
   return (
     <div className="space-y-10">
@@ -188,6 +199,18 @@ const FiscalitePage = async () => {
           </div>
         </section>
       )}
+
+      {/* Quotient familial */}
+      <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+        <h2 className="text-xl font-semibold text-white">Quotient familial</h2>
+        <p className="mt-1 mb-6 text-sm text-slate-400">
+          Calcul du nombre de parts fiscales et estimation de l&apos;IR 2024.
+        </p>
+        <QuotientFamilialCard
+          members={fiscalMembers}
+          estimatedAnnualIncome={summary.estimatedAnnualIncome}
+        />
+      </section>
 
       {/* Configuration */}
       <section className="rounded-3xl border border-white/5 bg-black/30 p-6">

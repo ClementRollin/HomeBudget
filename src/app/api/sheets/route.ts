@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveFamilySession, serializeSheet } from "@/lib/api/sheets";
 import { encryptSheetPayload } from "@/lib/sheets";
 import { sheetFormSchema } from "@/lib/validations/sheet";
+import { getFamilySubscription, getActivePlan, checkLimit } from "@/lib/subscription";
 
 export async function GET() {
   const auth = await resolveFamilySession();
@@ -30,6 +31,17 @@ export async function POST(request: NextRequest) {
   const auth = await resolveFamilySession();
   if (!auth) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
   const { familyId, userId } = auth;
+
+  const sub = await getFamilySubscription(familyId);
+  const plan = getActivePlan(sub.subscriptionStatus, sub.subscriptionEndsAt);
+  const sheetCount = await prisma.sheet.count({ where: { familyId } });
+  const limitCheck = checkLimit(plan, "maxSheets", sheetCount);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: "LIMIT_REACHED", limit: limitCheck.limit, resource: "sheets" },
+      { status: 402 },
+    );
+  }
 
   const body = await request.json();
   const parsed = sheetFormSchema.safeParse(body);
