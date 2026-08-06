@@ -5,6 +5,7 @@ import { decryptNumber, decryptValue } from "@/lib/crypto";
 import {
   buildDeclaration2042,
   computeIncomeByDeclarant,
+  computeIRSimulation,
   computeQuotientFamilial,
   type FamilyMemberFiscal,
   type FamilyMemberFiscalWithId,
@@ -15,6 +16,7 @@ import { getFamilySubscription, getActivePlan } from "@/lib/subscription";
 import TaxDocumentUploader from "@/components/fiscalite/TaxDocumentUploader";
 import ExtractedCasesEditor from "@/components/fiscalite/ExtractedCasesEditor";
 import Declaration2042Table from "@/components/fiscalite/Declaration2042Table";
+import IRSimulator from "@/components/fiscalite/IRSimulator";
 import UpgradeGate from "@/components/subscription/UpgradeGate";
 
 type TaxDocumentRow = {
@@ -164,6 +166,19 @@ const DeclarationPage = async () => {
   }));
   const quotientFamilial = computeQuotientFamilial(fiscalMembers);
 
+  // Simulateur IR (PRO uniquement)
+  const irSimulation = plan === "PRO"
+    ? computeIRSimulation({
+        case1AJ,
+        case1BJ,
+        perContribYTD,
+        dividends,
+        capitalGains,
+        rentalIncome,
+        parts: quotientFamilial.parts,
+      })
+    : null;
+
   const statusLabel: Record<TaxDocumentRow["extractionStatus"], string> = {
     PENDING: "En attente",
     PROCESSING: "Extraction en cours",
@@ -261,6 +276,21 @@ const DeclarationPage = async () => {
           </div>
         </section>
       )}
+
+      {/* Simulateur IR */}
+      <section className="rounded-3xl border border-white/5 bg-black/30 p-6">
+        <h2 className="mb-1 text-xl font-semibold text-white">Simulation IR</h2>
+        <p className="mb-6 text-sm text-slate-400">
+          Estimation de votre impôt sur le revenu à partir des cases calculées ci-dessous.
+        </p>
+        {irSimulation ? (
+          <IRSimulator result={irSimulation} />
+        ) : (
+          <UpgradeGate plan={plan} feature="Simulation IR">
+            {null}
+          </UpgradeGate>
+        )}
+      </section>
 
       {/* Comparaison N-1 — gate PRO */}
       {plan === "FREE" && hasN1Data && (
