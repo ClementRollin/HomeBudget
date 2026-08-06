@@ -16,6 +16,7 @@ const links: NavLink[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/sheets/new", label: "Nouvelle fiche de compte" },
   { href: "/sheets", label: "Historique" },
+  { href: "/analytics", label: "Analytiques" },
   { href: "/patrimoine", label: "Patrimoine" },
   {
     href: "/fiscalite",
