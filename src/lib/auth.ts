@@ -35,6 +35,7 @@ export const credentialsAuthorize = async (
     familyId: user.familyId,
     familyName: user.family.name,
     familyMemberId: member.id,
+    familyRole: user.familyRole,
   } as User;
 };
 
@@ -58,6 +59,7 @@ export const authConfig: NextAuthConfig = {
         token.familyId = user.familyId;
         token.familyName = user.familyName;
         token.familyMemberId = user.familyMemberId;
+        token.familyRole = user.familyRole;
       }
       return token;
     },
@@ -67,6 +69,7 @@ export const authConfig: NextAuthConfig = {
         session.user.familyId = token.familyId as string;
         session.user.familyName = token.familyName as string;
         session.user.familyMemberId = token.familyMemberId as string;
+        session.user.familyRole = (token.familyRole ?? "MEMBER") as "OWNER" | "MEMBER";
       }
       return session;
     },

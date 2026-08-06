@@ -142,6 +142,7 @@ export async function POST(request: Request) {
       email,
       password: passwordHash,
       familyId: family.id,
+      familyRole: "OWNER",
     },
   });
 

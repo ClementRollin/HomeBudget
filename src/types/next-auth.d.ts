@@ -7,6 +7,7 @@ declare module "next-auth" {
       familyId: string;
       familyName: string;
       familyMemberId: string;
+      familyRole: "OWNER" | "MEMBER";
     };
   }
 
@@ -14,6 +15,7 @@ declare module "next-auth" {
     familyId: string;
     familyName: string;
     familyMemberId: string;
+    familyRole: "OWNER" | "MEMBER";
   }
 }
 
@@ -23,5 +25,6 @@ declare module "@auth/core/jwt" {
     familyId?: string;
     familyName?: string;
     familyMemberId?: string;
+    familyRole?: "OWNER" | "MEMBER";
   }
 }
