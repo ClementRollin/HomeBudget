@@ -195,6 +195,77 @@ export const computeIRTax = (annualIncome: number, parts: number): IRResult => {
   return { taxAmount, marginalRate, averageRate };
 };
 
+// ─── Feature F7A : Simulateur IR ────────────────────────────────────────────
+
+const SALARY_ABATEMENT_RATE = 0.10;
+const SALARY_ABATEMENT_MIN  = 495;
+const SALARY_ABATEMENT_MAX  = 12_829;
+const DIVIDEND_ABATEMENT_RATE = 0.40;
+const PFU_RATE = 0.128;
+
+export type IRSimulationResult = {
+  taxableIncome: number;
+  irProgressive: number;
+  pfuCapitalGains: number;
+  totalIR: number;
+  marginalRate: number;
+  averageRate: number;
+  parts: number;
+  breakdown: Array<{ label: string; amount: number }>;
+};
+
+export const computeIRSimulation = (params: {
+  case1AJ: number;
+  case1BJ: number;
+  perContribYTD: number;
+  dividends: number;
+  capitalGains: number;
+  rentalIncome: number;
+  parts: number;
+}): IRSimulationResult => {
+  const abate = (salary: number) =>
+    salary > 0
+      ? Math.min(Math.max(salary * SALARY_ABATEMENT_RATE, SALARY_ABATEMENT_MIN), SALARY_ABATEMENT_MAX)
+      : 0;
+
+  const netSalary1   = Math.max(0, params.case1AJ - abate(params.case1AJ));
+  const netSalary2   = Math.max(0, params.case1BJ - abate(params.case1BJ));
+  const netDividends = Math.max(0, params.dividends * (1 - DIVIDEND_ABATEMENT_RATE));
+
+  const taxableIncome = Math.max(
+    0,
+    netSalary1 + netSalary2 + netDividends + params.rentalIncome - params.perContribYTD,
+  );
+
+  const irResult = computeIRTax(taxableIncome, params.parts);
+  const pfuCapitalGains = params.capitalGains * PFU_RATE;
+  const totalIR = irResult.taxAmount + pfuCapitalGains;
+
+  const grossIncome =
+    params.case1AJ + params.case1BJ + params.dividends +
+    params.capitalGains + params.rentalIncome;
+  const averageRate = grossIncome > 0 ? totalIR / grossIncome : 0;
+
+  const breakdown: Array<{ label: string; amount: number }> = [
+    { label: "Salaires D1 (abattement 10 %)", amount: netSalary1 },
+    { label: "Salaires D2 (abattement 10 %)", amount: netSalary2 },
+    { label: "Dividendes (abattement 40 %)",  amount: netDividends },
+    { label: "Revenus fonciers",              amount: params.rentalIncome },
+    { label: "Déduction PER (6NS)",           amount: -params.perContribYTD },
+  ].filter((b) => b.amount !== 0);
+
+  return {
+    taxableIncome,
+    irProgressive: irResult.taxAmount,
+    pfuCapitalGains,
+    totalIR,
+    marginalRate: irResult.marginalRate,
+    averageRate,
+    parts: params.parts,
+    breakdown,
+  };
+};
+
 // ─── Feature F1 : Aide à la déclaration 2042 ────────────────────────────────
 
 export type SheetWithSalaries = {
