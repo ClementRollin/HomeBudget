@@ -201,13 +201,18 @@ describe('computeIncomeDistribution', () => {
     expect(persons).not.toContain('HER')
   })
 
-  it('sets fixedChargeShare to 0 when totalIncome is 0', () => {
-    // No salaries, just a charge — distribution will be empty so we test via a 0-income scenario
-    // Actually computeIncomeDistribution with no salaries returns empty distribution
-    // Test with all same person but no fixed charges to get 0 fixedChargeShare
+  it('sets fixedChargeShare to 0 when no fixed common charges', () => {
     const sheet = makeSheet([makeSalary('Alice', 1000)])
     const result = computeIncomeDistribution(sheet)
     expect(result.fixedCommonCharges).toBe(0)
     expect(result.distribution[0].fixedChargeShare).toBe(0)
+  })
+
+  it('falls back person label to Membre for empty string person', () => {
+    const sheet = makeSheet([makeSalary('', 1000), makeSalary('', 500)])
+    const result = computeIncomeDistribution(sheet)
+    const membre = result.distribution.find((d) => d.person === 'Membre')
+    expect(membre).toBeDefined()
+    expect(membre!.amount).toBe(1500)
   })
 })

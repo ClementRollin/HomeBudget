@@ -7,6 +7,7 @@ import {
   computeIRTax,
   computeIRSimulation,
   IR_BRACKETS_2024,
+  QF_CAP_PER_HALF_PART,
 } from '@/lib/fiscalite'
 import type { FamilyMemberFiscal } from '@/lib/fiscalite'
 
@@ -28,9 +29,15 @@ describe('computePERCeiling', () => {
   })
 
   it('clamps exactly at min boundary', () => {
+    // At exactly PER_CEILING_MIN / 0.10, 10% equals the minimum — result is PER_CEILING_MIN
     const incomeThatHits10Pct = PER_CEILING_MIN / 0.10 // 46370
-    const result = computePERCeiling(incomeThatHits10Pct)
-    expect(result).toBeGreaterThanOrEqual(PER_CEILING_MIN)
+    expect(computePERCeiling(incomeThatHits10Pct)).toBe(PER_CEILING_MIN)
+  })
+
+  it('clamps exactly at max boundary', () => {
+    // At exactly PER_CEILING_MAX / 0.10, 10% equals the maximum — result is PER_CEILING_MAX
+    const incomeThatHitsMax = PER_CEILING_MAX / 0.10 // 370940
+    expect(computePERCeiling(incomeThatHitsMax)).toBe(PER_CEILING_MAX)
   })
 })
 
@@ -65,11 +72,18 @@ describe('computeQuotientFamilial', () => {
     expect(result.parts).toBe(4)
   })
 
-  it('adds 0.25 part per child in alternate custody for first two', () => {
+  it('adds 0.25 part per child in alternate custody (1st/2nd rank)', () => {
     const altChild: FamilyMemberFiscal = { fiscalRole: 'DEPENDENT_CHILD', isAlternateGuard: true, isDisabled: false }
     const result = computeQuotientFamilial([d1, d2, altChild])
     // 2 + 0.25 (0.5/2) = 2.25
     expect(result.parts).toBe(2.25)
+  })
+
+  it('adds 0.5 part for 3rd child in alternate custody', () => {
+    const altChild: FamilyMemberFiscal = { fiscalRole: 'DEPENDENT_CHILD', isAlternateGuard: true, isDisabled: false }
+    const result = computeQuotientFamilial([d1, d2, child, child, altChild])
+    // 2 + 0.5 + 0.5 + 0.5 (1/2 for 3rd alternate) = 3.5
+    expect(result.parts).toBe(3.5)
   })
 
   it('adds 0.5 extra part for disabled child', () => {
@@ -97,6 +111,20 @@ describe('computeQuotientFamilial', () => {
     // 2 + 0.5 + 0.5 = 3
     expect(result.parts).toBe(3)
   })
+
+  it('treats DEPENDENT_ADULT with same part rules as DEPENDENT_CHILD', () => {
+    const adult: FamilyMemberFiscal = { fiscalRole: 'DEPENDENT_ADULT', isAlternateGuard: false, isDisabled: false }
+    const result = computeQuotientFamilial([d1, d2, adult])
+    // 2 + 0.5 (premier enfant majeur rattaché) = 2.5
+    expect(result.parts).toBe(2.5)
+  })
+
+  it('uses "Enfant majeur rattaché" label for DEPENDENT_ADULT in breakdown', () => {
+    const adult: FamilyMemberFiscal = { fiscalRole: 'DEPENDENT_ADULT', isAlternateGuard: false, isDisabled: false }
+    const result = computeQuotientFamilial([d1, d2, adult])
+    const entry = result.breakdown.find((b) => b.label.includes('majeur rattaché'))
+    expect(entry).toBeDefined()
+  })
 })
 
 // ─── computeIRTax ─────────────────────────────────────────────────────────────
@@ -119,15 +147,21 @@ describe('computeIRTax', () => {
   it('computes progressive tax correctly for income spanning two brackets', () => {
     // income 35000 : 11294@0%, (28797-11294)@11%, (35000-28797)@30%
     const result = computeIRTax(35_000, 1)
-    const bracket1 = 0
     const bracket2 = (28_797 - 11_294) * 0.11
     const bracket3 = (35_000 - 28_797) * 0.30
-    expect(result.taxAmount).toBeCloseTo(bracket1 + bracket2 + bracket3, 2)
+    expect(result.taxAmount).toBeCloseTo(bracket2 + bracket3, 2)
     expect(result.marginalRate).toBe(0.30)
   })
 
+  it('correctly taxes income at exact bracket boundary (28797)', () => {
+    // At exactly the 11% bracket upper bound, marginal rate stays 11%
+    const result = computeIRTax(28_797, 1)
+    expect(result.marginalRate).toBe(0.11)
+    const expected = (28_797 - 11_294) * 0.11
+    expect(result.taxAmount).toBeCloseTo(expected, 2)
+  })
+
   it('divides taxable income by parts for quotient familial', () => {
-    // Same household income, more parts → less tax
     const taxSingle = computeIRTax(60_000, 1)
     const taxCouple = computeIRTax(60_000, 2)
     expect(taxCouple.taxAmount).toBeLessThan(taxSingle.taxAmount)
@@ -145,14 +179,17 @@ describe('computeIRTax', () => {
     expect(result.taxAmount).toBe(0)
   })
 
-  it('caps the QF benefit at the plafonnement ceiling', () => {
-    // With a very high income and many parts, the QF saving should be capped
-    const taxWith1Part = computeIRTax(200_000, 1)
-    const taxWith5Parts = computeIRTax(200_000, 5)
-    const saving = taxWith1Part.taxAmount - taxWith5Parts.taxAmount
-    // 4 extra half-parts → max saving = 4 * 2 * 1759 = 14072
-    const maxSaving = (5 - 1) * 2 * 1_759
-    expect(saving).toBeLessThanOrEqual(maxSaving + 0.01) // small float tolerance
+  it('caps the QF benefit at QF_CAP_PER_HALF_PART per extra half-part', () => {
+    // With high enough income, the QF saving is definitively capped
+    const parts = 5
+    const taxWith1Part = computeIRTax(500_000, 1)
+    const taxWithParts = computeIRTax(500_000, parts)
+    const saving = taxWith1Part.taxAmount - taxWithParts.taxAmount
+    // extra half-parts = (5 - 1) * 2 = 8, max saving = 8 * QF_CAP_PER_HALF_PART
+    const extraHalfParts = (parts - 1) * 2
+    const maxSaving = QF_CAP_PER_HALF_PART * extraHalfParts
+    // At 500k income, the cap is definitively hit — saving should equal maxSaving exactly
+    expect(saving).toBeCloseTo(maxSaving, 1)
   })
 })
 
@@ -175,6 +212,18 @@ describe('computeIRSimulation', () => {
     expect(result.taxableIncome).toBeCloseTo(36_000, 2)
   })
 
+  it('applies 10% salary abatement to case1BJ (declarant 2)', () => {
+    const result = computeIRSimulation({ ...baseParams, case1AJ: 0, case1BJ: 30_000 })
+    // Net salary D2 = 30000 - 3000 = 27000
+    expect(result.taxableIncome).toBeCloseTo(27_000, 2)
+  })
+
+  it('accumulates both declarant salaries in taxable income', () => {
+    const result = computeIRSimulation({ ...baseParams, case1AJ: 40_000, case1BJ: 30_000 })
+    // 36000 (D1) + 27000 (D2) = 63000
+    expect(result.taxableIncome).toBeCloseTo(63_000, 2)
+  })
+
   it('deducts PER contributions from taxable income', () => {
     const result = computeIRSimulation({ ...baseParams, perContribYTD: 5_000 })
     // 36000 - 5000 = 31000
@@ -183,7 +232,7 @@ describe('computeIRSimulation', () => {
 
   it('applies 40% abatement to dividends', () => {
     const result = computeIRSimulation({ ...baseParams, case1AJ: 0, dividends: 10_000 })
-    // Net dividends = 10000 * 0.6 = 6000, abatement min does not apply (salary=0)
+    // Net dividends = 10000 * 0.6 = 6000
     expect(result.taxableIncome).toBeCloseTo(6_000, 2)
   })
 
@@ -230,7 +279,6 @@ describe('computeIRSimulation', () => {
 
   it('breakdown filters out zero-amount entries', () => {
     const result = computeIRSimulation(baseParams)
-    // case1BJ=0, dividends=0, rentalIncome=0, perContribYTD=0 → filtered
     const labels = result.breakdown.map((b) => b.label)
     expect(labels).not.toContain('Salaires D2 (abattement 10 %)')
     expect(labels).not.toContain('Revenus fonciers')
@@ -238,9 +286,9 @@ describe('computeIRSimulation', () => {
 
   it('includes case1AJ entry when salary is non-zero', () => {
     const result = computeIRSimulation(baseParams)
-    const salaryEntry = result.breakdown.find((b) => b.label === 'Salaires D1 (abattement 10 %)')
-    expect(salaryEntry).toBeDefined()
-    expect(salaryEntry!.amount).toBeGreaterThan(0)
+    const entry = result.breakdown.find((b) => b.label === 'Salaires D1 (abattement 10 %)')
+    expect(entry).toBeDefined()
+    expect(entry!.amount).toBeGreaterThan(0)
   })
 
   it('returns correct parts in result', () => {
@@ -257,9 +305,11 @@ describe('IR_BRACKETS_2024', () => {
     expect(IR_BRACKETS_2024[IR_BRACKETS_2024.length - 1].rate).toBe(0.45)
   })
 
-  it('brackets are in ascending order of max', () => {
-    for (let i = 1; i < IR_BRACKETS_2024.length - 1; i++) {
-      expect(IR_BRACKETS_2024[i].max).toBeGreaterThan(IR_BRACKETS_2024[i - 1].max)
+  it('finite brackets are in ascending order of max', () => {
+    // Exclude the last entry (Infinity) from the comparison loop
+    const finiteBrackets = IR_BRACKETS_2024.filter((b) => isFinite(b.max))
+    for (let i = 1; i < finiteBrackets.length; i++) {
+      expect(finiteBrackets[i].max).toBeGreaterThan(finiteBrackets[i - 1].max)
     }
   })
 })

@@ -102,8 +102,10 @@ describe('PLAN_LIMITS', () => {
     expect(isFinite(PLAN_LIMITS.FREE.maxSheets)).toBe(true)
   })
 
-  it('PRO plan has Infinity limits', () => {
+  it('PRO plan has Infinity for all limits', () => {
     expect(PLAN_LIMITS.PRO.maxSheets).toBe(Infinity)
     expect(PLAN_LIMITS.PRO.maxAssets).toBe(Infinity)
+    expect(PLAN_LIMITS.PRO.maxDebts).toBe(Infinity)
+    expect(PLAN_LIMITS.PRO.maxGoals).toBe(Infinity)
   })
 })
