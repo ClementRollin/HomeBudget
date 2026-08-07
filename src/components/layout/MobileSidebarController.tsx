@@ -5,6 +5,7 @@ import type { Session } from "next-auth";
 
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 const MobileSidebarController = ({
   session,
@@ -36,9 +37,11 @@ const MobileSidebarController = ({
           currentPeriod={currentPeriod}
           onToggleSidebar={() => setMobileSidebarOpen(true)}
         />
-        <main className="flex-1 space-y-6 bg-gradient-to-br from-slate-950 via-slate-900 to-black p-6">
-          {children}
-        </main>
+        <ToastProvider>
+          <main className="flex-1 space-y-6 bg-gradient-to-br from-slate-950 via-slate-900 to-black p-6">
+            {children}
+          </main>
+        </ToastProvider>
       </div>
     </>
   );

@@ -18,6 +18,7 @@ import {
   sheetFormSchema,
   type SheetFormValues,
 } from "@/lib/validations/sheet";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface SheetFormProps {
 
@@ -36,6 +37,8 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
   const [serverMessage, setServerMessage] = useState<string | null>(null);
 
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const resolver = zodResolver(sheetFormSchema) as Resolver<SheetFormValues>;
 
@@ -124,8 +127,6 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
   const handleDelete = async () => {
 
     if (!sheetId) return;
-
-    if (!window.confirm("Supprimer cette fiche ? Cette action est irréversible.")) return;
 
     setIsDeleting(true);
 
@@ -447,7 +448,7 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
 
             type="button"
 
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
 
             disabled={isDeleting}
 
@@ -462,6 +463,14 @@ const SheetForm = ({ sheetId, initialValues, peopleOptions }: SheetFormProps) =>
         ) : null}
 
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Supprimer cette fiche ?"
+        message="Cette action est irréversible. La fiche de compte et toutes ses données seront définitivement supprimées."
+        onConfirm={() => { setShowDeleteConfirm(false); handleDelete(); }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
     </form>
 
