@@ -8,6 +8,7 @@ import PlanBadge from "@/components/subscription/PlanBadge";
 import SettingsActions from "@/components/subscription/SettingsActions";
 import InvoiceList, { mapStripeInvoice } from "@/components/subscription/InvoiceList";
 import PaymentMethodCard from "@/components/subscription/PaymentMethodCard";
+import AccountActions from "@/components/account/AccountActions";
 import type Stripe from "stripe";
 
 const limits = [
@@ -167,6 +168,17 @@ export default async function SettingsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Données personnelles */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <h2 className="text-sm font-medium text-slate-400">Mes données personnelles</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Conformément au RGPD, vous pouvez exporter ou supprimer toutes vos données.
+          </p>
+        </div>
+        <AccountActions />
       </div>
     </div>
   );
