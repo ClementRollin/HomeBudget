@@ -14,6 +14,9 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:unit": "vitest run --reporter=verbose src",
+    "test:integration": "vitest run --reporter=verbose tests/integration",
+    "test:e2e": "playwright test",
     "postinstall": "npm run prisma:generate",
     "prisma:seed": "npx tsx prisma/seed.ts"
   },
