@@ -15,11 +15,15 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
 
   const family = await prisma.family.findUnique({
     where: { id: session.user.familyId },
-    select: { inviteCode: true },
+    select: { inviteCode: true, onboardingCompletedAt: true },
   });
 
   if (!family) {
     console.warn(`[AppLayout] Family not found for familyId=${session.user.familyId} — data integrity issue`);
+  }
+
+  if (!family?.onboardingCompletedAt) {
+    redirect("/onboarding");
   }
 
   const currentPeriod = getCurrentPeriod();

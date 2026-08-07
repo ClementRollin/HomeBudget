@@ -66,9 +66,10 @@ model Family {
   stripeCustomerId     String?            @unique
   stripeSubscriptionId String?            @unique
   stripePriceId        String?
-  subscriptionStatus   SubscriptionStatus @default(FREE)
-  subscriptionEndsAt   DateTime?
-  users                User[]
+  subscriptionStatus    SubscriptionStatus @default(FREE)
+  subscriptionEndsAt    DateTime?
+  onboardingCompletedAt DateTime?
+  users                 User[]
   members              FamilyMember[]
   sheets               Sheet[]
   invitations          Invitation[]
