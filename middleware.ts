@@ -57,6 +57,21 @@ export default auth((req) => {
     }
   }
 
+  // ── CSRF : Content-Type guard sur les mutations API ───────────────────────
+  // Les formulaires HTML classiques ne peuvent pas envoyer application/json,
+  // ce qui bloque les attaques CSRF inter-origine sans token dédié.
+  if (isApiMutation) {
+    const contentType = req.headers.get("content-type") ?? "";
+    const isJson = contentType.includes("application/json");
+    const isMultipart = contentType.includes("multipart/form-data");
+    if (!isJson && !isMultipart) {
+      return NextResponse.json(
+        { error: "Unsupported Media Type" },
+        { status: 415 },
+      );
+    }
+  }
+
   // ── Auth guard ─────────────────────────────────────────────────────────────
   const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
