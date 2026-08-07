@@ -8,9 +8,13 @@ import type { PlanName } from "@/lib/subscription";
 export default function SettingsActions({
   plan,
   hasStripeCustomer,
+  portalOnly = false,
+  label,
 }: {
   plan: PlanName;
   hasStripeCustomer: boolean;
+  portalOnly?: boolean;
+  label?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -47,7 +51,7 @@ export default function SettingsActions({
     }
   };
 
-  if (plan === "PRO" && hasStripeCustomer) {
+  if ((plan === "PRO" && hasStripeCustomer) || portalOnly) {
     return (
       <button
         type="button"
@@ -55,7 +59,7 @@ export default function SettingsActions({
         disabled={loading}
         className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5 disabled:opacity-60"
       >
-        {loading ? "Redirection…" : "Gérer l'abonnement"}
+        {loading ? "Redirection…" : (label ?? "Gérer l'abonnement")}
       </button>
     );
   }
