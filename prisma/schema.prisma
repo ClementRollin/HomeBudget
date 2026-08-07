@@ -7,6 +7,26 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Plan {
+  id                   String  @id @default(cuid())
+  name                 String  @unique
+  label                String
+  maxSheets            Int
+  maxAssets            Int
+  maxDebts             Int
+  maxGoals             Int
+  priceMonthly         Float   @default(0)
+  stripePriceIdMonthly String? @unique
+  stripePriceIdAnnual  String? @unique
+  isActive             Boolean @default(true)
+}
+
+model AppConfig {
+  key         String @id
+  value       String
+  description String @default("")
+}
+
 enum ChargeCategory {
   FIXE_COMMUN
   FIXE_INDIVIDUEL

@@ -42,6 +42,45 @@ async function main() {
   await prisma.familyMember.deleteMany();
   await prisma.user.deleteMany();
   await prisma.family.deleteMany();
+  await prisma.plan.deleteMany();
+  await prisma.appConfig.deleteMany();
+
+  console.log("📋 Création des plans d'abonnement...");
+
+  await prisma.plan.createMany({
+    data: [
+      {
+        name: "FREE",
+        label: "Gratuit",
+        maxSheets: 3,
+        maxAssets: 5,
+        maxDebts: 3,
+        maxGoals: 2,
+        priceMonthly: 0,
+        isActive: true,
+      },
+      {
+        name: "PRO",
+        label: "Pro",
+        maxSheets: 2147483647,
+        maxAssets: 2147483647,
+        maxDebts: 2147483647,
+        maxGoals: 2147483647,
+        priceMonthly: 9.9,
+        stripePriceIdMonthly: process.env.STRIPE_PRICE_ID_PRO_MONTHLY ?? null,
+        stripePriceIdAnnual: process.env.STRIPE_PRICE_ID_PRO_ANNUAL ?? null,
+        isActive: true,
+      },
+    ],
+  });
+
+  console.log("⚙️  Création de la configuration applicative...");
+
+  await prisma.appConfig.createMany({
+    data: [
+      { key: "INVITE_EXPIRATION_DAYS", value: "7", description: "Durée de validité des invitations (jours)" },
+    ],
+  });
 
   console.log("👨‍👩‍👧 Création de la famille...");
 
