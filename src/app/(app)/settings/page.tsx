@@ -139,6 +139,14 @@ export default async function SettingsPage() {
         </div>
       )}
 
+      {/* Liens légaux */}
+      <nav className="flex gap-4 text-xs text-slate-500">
+        <a href="/legal/cgu" className="hover:text-slate-300 transition-colors">CGU</a>
+        <a href="/legal/cgv" className="hover:text-slate-300 transition-colors">CGV</a>
+        <a href="/legal/mentions-legales" className="hover:text-slate-300 transition-colors">Mentions légales</a>
+        <a href="/legal/confidentialite" className="hover:text-slate-300 transition-colors">Confidentialité</a>
+      </nav>
+
       {/* Tableau comparatif */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <table className="w-full text-sm">
