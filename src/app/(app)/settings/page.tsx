@@ -2,9 +2,30 @@ import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
 import { getActivePlan, PLAN_LIMITS } from "@/lib/subscription";
 import PlanBadge from "@/components/subscription/PlanBadge";
 import SettingsActions from "@/components/subscription/SettingsActions";
+import InvoiceList, { mapStripeInvoice } from "@/components/subscription/InvoiceList";
+import PaymentMethodCard from "@/components/subscription/PaymentMethodCard";
+import type Stripe from "stripe";
+
+const limits = [
+  { label: "Fiches mensuelles", free: PLAN_LIMITS.FREE.maxSheets, pro: "Illimité" },
+  { label: "Actifs patrimoniaux", free: PLAN_LIMITS.FREE.maxAssets, pro: "Illimité" },
+  { label: "Dettes", free: PLAN_LIMITS.FREE.maxDebts, pro: "Illimité" },
+  { label: "Objectifs", free: PLAN_LIMITS.FREE.maxGoals, pro: "Illimité" },
+  { label: "Déclaration 2042 + IA", free: "❌", pro: "✅" },
+  { label: "Quotient familial + IR", free: "❌", pro: "✅" },
+  { label: "Comparaison N-1", free: "❌", pro: "✅" },
+];
+
+type PaymentMethodInfo = {
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+} | null;
 
 export default async function SettingsPage() {
   const session = await getCurrentSession();
@@ -16,21 +37,46 @@ export default async function SettingsPage() {
       subscriptionStatus: true,
       subscriptionEndsAt: true,
       stripeCustomerId: true,
+      stripeSubscriptionId: true,
     },
   });
   if (!family) redirect("/");
 
   const plan = getActivePlan(family.subscriptionStatus, family.subscriptionEndsAt);
 
-  const limits = [
-    { label: "Fiches mensuelles", free: PLAN_LIMITS.FREE.maxSheets, pro: "Illimité" },
-    { label: "Actifs patrimoniaux", free: PLAN_LIMITS.FREE.maxAssets, pro: "Illimité" },
-    { label: "Dettes", free: PLAN_LIMITS.FREE.maxDebts, pro: "Illimité" },
-    { label: "Objectifs", free: PLAN_LIMITS.FREE.maxGoals, pro: "Illimité" },
-    { label: "Déclaration 2042 + IA", free: "❌", pro: "✅" },
-    { label: "Quotient familial + IR", free: "❌", pro: "✅" },
-    { label: "Comparaison N-1", free: "❌", pro: "✅" },
-  ];
+  // Fetch Stripe data only for PRO users with a Stripe customer
+  let invoices: ReturnType<typeof mapStripeInvoice>[] = [];
+  let paymentMethod: PaymentMethodInfo = null;
+
+  if (plan === "PRO" && family.stripeCustomerId) {
+    try {
+      const [invoiceList, subscription] = await Promise.all([
+        stripe.invoices.list({ customer: family.stripeCustomerId, limit: 10 }),
+        family.stripeSubscriptionId
+          ? stripe.subscriptions.retrieve(family.stripeSubscriptionId, {
+              expand: ["default_payment_method"],
+            })
+          : null,
+      ]);
+
+      invoices = invoiceList.data.map(mapStripeInvoice);
+
+      const pm = subscription?.default_payment_method;
+      if (pm && typeof pm !== "string" && (pm as Stripe.PaymentMethod).type === "card") {
+        const card = (pm as Stripe.PaymentMethod).card;
+        if (card) {
+          paymentMethod = {
+            brand: card.brand,
+            last4: card.last4,
+            expMonth: card.exp_month,
+            expYear: card.exp_year,
+          };
+        }
+      }
+    } catch {
+      // Stripe not configured or network error — degrade gracefully
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 py-8">
@@ -39,6 +85,7 @@ export default async function SettingsPage() {
         <p className="mt-1 text-slate-400">Gérez votre abonnement HomeBudget</p>
       </div>
 
+      {/* Plan actuel */}
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -68,6 +115,31 @@ export default async function SettingsPage() {
         </div>
       </div>
 
+      {/* Moyen de paiement (PRO uniquement) */}
+      {paymentMethod && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-slate-400">Moyen de paiement</h2>
+            <SettingsActions plan={plan} hasStripeCustomer={!!family.stripeCustomerId} portalOnly label="Modifier" />
+          </div>
+          <PaymentMethodCard
+            brand={paymentMethod.brand}
+            last4={paymentMethod.last4}
+            expMonth={paymentMethod.expMonth}
+            expYear={paymentMethod.expYear}
+          />
+        </div>
+      )}
+
+      {/* Historique des factures (PRO uniquement) */}
+      {plan === "PRO" && family.stripeCustomerId && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <h2 className="text-sm font-medium text-slate-400">Historique des factures</h2>
+          <InvoiceList invoices={invoices} />
+        </div>
+      )}
+
+      {/* Tableau comparatif */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
