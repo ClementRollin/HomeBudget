@@ -8,6 +8,8 @@ import { invitationRepository } from "@/lib/repositories/invitations";
 import { generateInviteCode, slugify } from "@/lib/utils";
 import { getInvitationExpirationDate } from "@/lib/invitations";
 import { registerRateLimiter } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
+import WelcomeEmail from "@/emails/WelcomeEmail";
 
 const baseFields = {
   name: z.string().min(2),
@@ -147,6 +149,13 @@ export async function POST(request: Request) {
   });
 
   await ensureMemberForUser(newUser.id, family.id, name);
+
+  const appUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  void sendEmail({
+    to: email,
+    subject: "Bienvenue sur HomeBudget !",
+    react: WelcomeEmail({ userName: name, familyName: family.name, appUrl }),
+  });
 
   return NextResponse.json({
     success: true,

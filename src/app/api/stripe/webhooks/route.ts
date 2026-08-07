@@ -3,8 +3,22 @@ import type Stripe from "stripe";
 
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { sendEmail } from "@/lib/email";
+import UpgradeConfirmationEmail from "@/emails/UpgradeConfirmationEmail";
+import PaymentFailedEmail from "@/emails/PaymentFailedEmail";
+import SubscriptionCanceledEmail from "@/emails/SubscriptionCanceledEmail";
 
 export const dynamic = "force-dynamic";
+
+const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+
+async function getFamilyEmail(familyId: string): Promise<{ email: string; name: string } | null> {
+  const user = await prisma.user.findFirst({
+    where: { familyId, familyRole: "OWNER" },
+    select: { email: true, name: true },
+  });
+  return user ? { email: user.email, name: user.name ?? "Membre" } : null;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -29,8 +43,8 @@ export async function POST(request: NextRequest) {
 
       const subscription = await stripe.subscriptions.retrieve(
         checkoutSession.subscription as string,
-      );
-      await prisma.family.update({
+      ) as unknown as Stripe.Subscription;
+      const family = await prisma.family.update({
         where: { id: familyId },
         data: {
           subscriptionStatus: "PRO",
@@ -39,6 +53,19 @@ export async function POST(request: NextRequest) {
           subscriptionEndsAt: null,
         },
       });
+
+      const owner = await getFamilyEmail(familyId);
+      if (owner) {
+        const periodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end;
+        const renewalDate = periodEnd
+          ? new Date(periodEnd * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+          : "prochainement";
+        void sendEmail({
+          to: owner.email,
+          subject: "Votre abonnement HomeBudget PRO est activé !",
+          react: UpgradeConfirmationEmail({ familyName: family.name, renewalDate, appUrl: APP_URL }),
+        });
+      }
       break;
     }
 
@@ -63,6 +90,22 @@ export async function POST(request: NextRequest) {
           subscriptionEndsAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
         },
       });
+
+      if (status === "PRO_CANCELED" && sub.cancel_at) {
+        const owner = await getFamilyEmail(family.id);
+        if (owner) {
+          const accessUntil = new Date(sub.cancel_at * 1000).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+          void sendEmail({
+            to: owner.email,
+            subject: "Votre abonnement HomeBudget PRO a été résilié",
+            react: SubscriptionCanceledEmail({ familyName: family.name, accessUntil, appUrl: APP_URL }),
+          });
+        }
+      }
       break;
     }
 
@@ -81,17 +124,38 @@ export async function POST(request: NextRequest) {
     }
 
     case "invoice.payment_failed": {
-      // In Stripe API 2026+, subscription is accessed via parent.subscription_details
       const invoiceData = event.data.object as unknown as Record<string, unknown>;
       const subscriptionId =
         (invoiceData["parent"] as Record<string, unknown> | null)?.["subscription_details"] !== undefined
           ? ((invoiceData["parent"] as Record<string, unknown>)["subscription_details"] as Record<string, unknown>)["subscription"] as string | null
           : (invoiceData["subscription"] as string | null);
       if (subscriptionId) {
-        await prisma.family.updateMany({
+        const family = await prisma.family.findFirst({
           where: { stripeSubscriptionId: subscriptionId },
-          data: { subscriptionStatus: "PRO_PAST_DUE" },
         });
+        if (family) {
+          await prisma.family.update({
+            where: { id: family.id },
+            data: { subscriptionStatus: "PRO_PAST_DUE" },
+          });
+
+          const owner = await getFamilyEmail(family.id);
+          if (owner) {
+            const portalRes = await stripe.billingPortal.sessions.create({
+              customer: family.stripeCustomerId!,
+              return_url: `${APP_URL}/settings`,
+            }).catch(() => null);
+
+            void sendEmail({
+              to: owner.email,
+              subject: "Action requise : paiement HomeBudget PRO échoué",
+              react: PaymentFailedEmail({
+                familyName: family.name,
+                portalUrl: portalRes?.url ?? `${APP_URL}/settings`,
+              }),
+            });
+          }
+        }
       }
       break;
     }
