@@ -15,9 +15,34 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const APP_URL = process.env.NEXTAUTH_URL ?? "https://homebudget.app";
+
 export const metadata: Metadata = {
-  title: "HomeBudget",
-  description: "Gestion collaborative des fiches de budget mensuel.",
+  title: {
+    default: "HomeBudget — Gérez votre budget et votre patrimoine en famille",
+    template: "%s — HomeBudget",
+  },
+  description:
+    "HomeBudget est l'application de gestion budgétaire et patrimoniale pour les familles françaises. Suivi mensuel, patrimoine, simulation IR, extraction 2042 par IA.",
+  keywords: ["budget familial", "gestion patrimoine", "simulation impôts", "déclaration 2042", "budget mensuel", "PEA", "assurance vie"],
+  authors: [{ name: "HomeBudget" }],
+  openGraph: {
+    title: "HomeBudget — Budget et patrimoine en famille",
+    description:
+      "Suivez votre budget mensuel, gérez votre patrimoine et simulez votre impôt sur le revenu avec HomeBudget.",
+    url: APP_URL,
+    siteName: "HomeBudget",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HomeBudget — Budget et patrimoine en famille",
+    description:
+      "Suivez votre budget mensuel, gérez votre patrimoine et simulez votre impôt sur le revenu.",
+  },
+  robots: { index: true, follow: true },
+  metadataBase: new URL(APP_URL),
 };
 
 export default function RootLayout({
