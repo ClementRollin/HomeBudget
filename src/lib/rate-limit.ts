@@ -36,3 +36,9 @@ export const createRateLimiter = (options: { limit: number; windowMs: number }) 
 };
 
 export const registerRateLimiter = createRateLimiter({ limit: 5, windowMs: 15 * 60 * 1000 });
+
+// Login : 10 tentatives par 15 minutes par IP
+export const loginRateLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60 * 1000 });
+
+// Mutations API sensibles : 60 req/min par IP
+export const apiMutationRateLimiter = createRateLimiter({ limit: 60, windowMs: 60 * 1000 });
