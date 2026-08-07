@@ -1,0 +1,102 @@
+name: CI — main (production)
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Full test suite + E2E
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: homebudget_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/homebudget_test
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+        env:
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY_TEST }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET_TEST }}
+
+      - name: Integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/homebudget_test
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY_TEST }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET_TEST }}
+
+      - name: E2E tests
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/homebudget_test
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY_TEST }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET_TEST }}
+          BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  deploy-production:
+    name: Deploy to production
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel Production
+        run: echo "TODO — configure Vercel production deploy"
+        # uses: amondnet/vercel-action@v25
+        # with:
+        #   vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        #   vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        #   vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        #   vercel-args: '--prod'
