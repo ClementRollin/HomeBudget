@@ -9,6 +9,8 @@ import type { DecryptedDebt } from "@/lib/patrimoine";
 import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
 import LimitWarning from "@/components/subscription/LimitWarning";
 import UpgradeGate from "@/components/subscription/UpgradeGate";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const defaultForm: DebtFormValues = {
   label: "",
@@ -20,7 +22,9 @@ const defaultForm: DebtFormValues = {
 
 const DebtTracker = ({ initialDebts, plan }: { initialDebts: DecryptedDebt[]; plan: PlanName }) => {
   const router = useRouter();
+  const { addToast } = useToast();
   const [debts, setDebts] = useState(initialDebts);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // État CRUD
   const [showForm, setShowForm] = useState(false);
@@ -85,12 +89,16 @@ const DebtTracker = ({ initialDebts, plan }: { initialDebts: DecryptedDebt[]; pl
     router.refresh();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer cette dette ?")) return;
-    const res = await fetch(`/api/debts/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    const res = await fetch(`/api/debts/${deleteTargetId}`, { method: "DELETE", headers: { "Content-Type": "application/json" } });
+    setDeleteTargetId(null);
     if (res.ok) {
-      setDebts((prev) => prev.filter((d) => d.id !== id));
+      setDebts((prev) => prev.filter((d) => d.id !== deleteTargetId));
+      addToast("Dette supprimée");
       router.refresh();
+    } else {
+      addToast("Erreur lors de la suppression", "error");
     }
   };
 
@@ -276,7 +284,7 @@ const DebtTracker = ({ initialDebts, plan }: { initialDebts: DecryptedDebt[]; pl
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(debt.id)}
+                  onClick={() => setDeleteTargetId(debt.id)}
                   className="text-xs text-rose-400 hover:text-rose-300 px-2"
                 >
                   Supprimer
@@ -349,6 +357,14 @@ const DebtTracker = ({ initialDebts, plan }: { initialDebts: DecryptedDebt[]; pl
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="Supprimer cette dette ?"
+        message="Cette action est irréversible. La dette sera définitivement supprimée."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </section>
   );
 };

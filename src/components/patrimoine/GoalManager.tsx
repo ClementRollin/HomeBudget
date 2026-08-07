@@ -7,6 +7,8 @@ import type { DecryptedGoal } from "@/lib/patrimoine";
 import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
 import LimitWarning from "@/components/subscription/LimitWarning";
 import UpgradeGate from "@/components/subscription/UpgradeGate";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const currentYear = new Date().getFullYear();
 
@@ -55,12 +57,14 @@ const GoalManager = ({
   netWorth: number;
 }) => {
   const router = useRouter();
+  const { addToast } = useToast();
   const [goals, setGoals] = useState(initialGoals);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<GoalFormValues>(defaultValues);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const openCreate = () => {
     setEditId(null);
@@ -103,12 +107,16 @@ const GoalManager = ({
     router.refresh();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer cet objectif ?")) return;
-    const res = await fetch(`/api/goals/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    const res = await fetch(`/api/goals/${deleteTargetId}`, { method: "DELETE", headers: { "Content-Type": "application/json" } });
+    setDeleteTargetId(null);
     if (res.ok) {
-      setGoals((prev) => prev.filter((g) => g.id !== id));
+      setGoals((prev) => prev.filter((g) => g.id !== deleteTargetId));
+      addToast("Objectif supprimé");
       router.refresh();
+    } else {
+      addToast("Erreur lors de la suppression", "error");
     }
   };
 
@@ -254,7 +262,7 @@ const GoalManager = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(goal.id)}
+                    onClick={() => setDeleteTargetId(goal.id)}
                     className="text-xs text-rose-400 hover:text-rose-300"
                   >
                     Supprimer
@@ -265,6 +273,14 @@ const GoalManager = ({
           );
         })}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="Supprimer cet objectif ?"
+        message="Cette action est irréversible. L'objectif patrimonial sera définitivement supprimé."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </section>
   );
 };

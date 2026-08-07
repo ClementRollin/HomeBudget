@@ -7,6 +7,8 @@ import type { DecryptedAsset } from "@/lib/patrimoine";
 import { PLAN_LIMITS, type PlanName } from "@/lib/subscription";
 import LimitWarning from "@/components/subscription/LimitWarning";
 import UpgradeGate from "@/components/subscription/UpgradeGate";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const defaultValues: AssetFormValues = {
   type: "AUTRE",
@@ -18,12 +20,14 @@ const defaultValues: AssetFormValues = {
 
 const AssetManager = ({ initialAssets, plan }: { initialAssets: DecryptedAsset[]; plan: PlanName }) => {
   const router = useRouter();
+  const { addToast } = useToast();
   const [assets, setAssets] = useState(initialAssets);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<AssetFormValues>(defaultValues);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const openCreate = () => {
     setEditId(null);
@@ -71,12 +75,16 @@ const AssetManager = ({ initialAssets, plan }: { initialAssets: DecryptedAsset[]
     router.refresh();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer cet actif ?")) return;
-    const res = await fetch(`/api/assets/${id}`, { method: "DELETE" });
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    const res = await fetch(`/api/assets/${deleteTargetId}`, { method: "DELETE", headers: { "Content-Type": "application/json" } });
+    setDeleteTargetId(null);
     if (res.ok) {
-      setAssets((prev) => prev.filter((a) => a.id !== id));
+      setAssets((prev) => prev.filter((a) => a.id !== deleteTargetId));
+      addToast("Actif supprimé");
       router.refresh();
+    } else {
+      addToast("Erreur lors de la suppression", "error");
     }
   };
 
@@ -227,7 +235,7 @@ const AssetManager = ({ initialAssets, plan }: { initialAssets: DecryptedAsset[]
               </button>
               <button
                 type="button"
-                onClick={() => handleDelete(asset.id)}
+                onClick={() => setDeleteTargetId(asset.id)}
                 className="text-xs text-rose-400 hover:text-rose-300"
               >
                 Supprimer
@@ -236,6 +244,14 @@ const AssetManager = ({ initialAssets, plan }: { initialAssets: DecryptedAsset[]
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="Supprimer cet actif ?"
+        message="Cette action est irréversible. L'actif sera définitivement supprimé."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </section>
   );
 };
