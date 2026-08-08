@@ -99,6 +99,7 @@ async function main() {
       email: "test@homebudget.fr",
       password: passwordHash,
       familyId: family.id,
+      isAdmin: true,
     },
   });
 
