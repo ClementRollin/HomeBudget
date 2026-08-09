@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "hb_cookie_consent_v1";
 
-function getInitialVisible() {
-  if (typeof window === "undefined") return false;
-  return !localStorage.getItem(STORAGE_KEY);
-}
-
 export default function CookieBanner() {
-  const [visible, setVisible] = useState(getInitialVisible);
+  const [visible, setVisible] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setVisible(!localStorage.getItem(STORAGE_KEY)); }, []);
 
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, "accepted");
