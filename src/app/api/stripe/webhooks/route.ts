@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
       const owner = await getFamilyEmail(familyId);
       if (owner) {
-        const periodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end;
+        const periodEnd = subscription.items.data[0]?.current_period_end;
         const renewalDate = periodEnd
           ? new Date(periodEnd * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
           : "prochainement";
@@ -76,9 +76,10 @@ export async function POST(request: NextRequest) {
       });
       if (!family) break;
 
+      const isCanceling = sub.cancel_at_period_end || sub.cancel_at !== null;
       const status =
         sub.status === "past_due" ? "PRO_PAST_DUE"
-        : sub.status === "active" && sub.cancel_at_period_end ? "PRO_CANCELED"
+        : sub.status === "active" && isCanceling ? "PRO_CANCELED"
         : sub.status === "active" ? "PRO"
         : "FREE";
 
