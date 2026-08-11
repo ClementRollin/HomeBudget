@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
       break;
     }
 
-    case "customer.subscription.canceled":
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       await prisma.family.updateMany({
