@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 
-const FROM = "HomeBudget <noreply@[VOTRE-DOMAINE]>";
+// En dev sans domaine vérifié : utilise l'adresse de test Resend.
+// En prod : définir EMAIL_FROM=HomeBudget <no-reply@homebudget.app>
+const FROM = process.env.EMAIL_FROM ?? "HomeBudget <onboarding@resend.dev>";
 
 export async function sendEmail({
   to,
