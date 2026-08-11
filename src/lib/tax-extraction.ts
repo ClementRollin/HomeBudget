@@ -1,8 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
 
-const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 const extractedCasesSchema = z.record(z.string(), z.number());
 
 export const TAX_CASES_TO_EXTRACT = [
@@ -15,6 +13,12 @@ export const TAX_CASES_TO_EXTRACT = [
 
 export type TaxCaseCode = (typeof TAX_CASES_TO_EXTRACT)[number];
 
+function getGenai() {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("GEMINI_API_KEY is not set");
+  return new GoogleGenerativeAI(key);
+}
+
 /**
  * Extrait les cases fiscales d'un document PDF ou image via Gemini Flash.
  * Retourne les cases trouvées et un score de confiance (0–1).
@@ -23,7 +27,7 @@ export const extractTaxCases = async (
   fileBuffer: Buffer,
   mimeType: "application/pdf" | "image/jpeg" | "image/png"
 ): Promise<{ cases: Record<string, number>; confidence: number }> => {
-  const model = genai.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = getGenai().getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const result = await model.generateContent([
     {
