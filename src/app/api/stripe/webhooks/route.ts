@@ -7,6 +7,8 @@ import { sendEmail } from "@/lib/email";
 import UpgradeConfirmationEmail from "@/emails/UpgradeConfirmationEmail";
 import PaymentFailedEmail from "@/emails/PaymentFailedEmail";
 import SubscriptionCanceledEmail from "@/emails/SubscriptionCanceledEmail";
+import RenewalReceiptEmail from "@/emails/RenewalReceiptEmail";
+import DowngradeEmail from "@/emails/DowngradeEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +115,9 @@ export async function POST(request: NextRequest) {
 
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
+      const deletedFamily = await prisma.family.findFirst({
+        where: { stripeSubscriptionId: sub.id },
+      });
       await prisma.family.updateMany({
         where: { stripeSubscriptionId: sub.id },
         data: {
@@ -122,6 +127,51 @@ export async function POST(request: NextRequest) {
           subscriptionEndsAt: null,
         },
       });
+      if (deletedFamily) {
+        const owner = await getFamilyEmail(deletedFamily.id);
+        if (owner) {
+          void sendEmail({
+            to: owner.email,
+            subject: "Votre foyer HomeBudget est repassé au plan gratuit",
+            react: DowngradeEmail({ familyName: deletedFamily.name, appUrl: APP_URL }),
+          });
+        }
+      }
+      break;
+    }
+
+    case "invoice.paid": {
+      const invoicePaid = event.data.object as unknown as Record<string, unknown>;
+      const billingReason = invoicePaid["billing_reason"] as string | null;
+      // Renouvellement uniquement — le premier paiement est déjà couvert par checkout.session.completed
+      if (billingReason !== "subscription_cycle") break;
+
+      const paidSubId =
+        (invoicePaid["parent"] as Record<string, unknown> | null)?.["subscription_details"] !== undefined
+          ? ((invoicePaid["parent"] as Record<string, unknown>)["subscription_details"] as Record<string, unknown>)["subscription"] as string | null
+          : (invoicePaid["subscription"] as string | null);
+
+      if (paidSubId) {
+        const paidFamily = await prisma.family.findFirst({
+          where: { stripeSubscriptionId: paidSubId },
+        });
+        if (paidFamily) {
+          const owner = await getFamilyEmail(paidFamily.id);
+          if (owner) {
+            const sub = await stripe.subscriptions.retrieve(paidSubId) as unknown as Stripe.Subscription;
+            const renewalDate = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+            const periodEnd = sub.items.data[0]?.current_period_end;
+            const nextRenewalDate = periodEnd
+              ? new Date(periodEnd * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+              : "prochainement";
+            void sendEmail({
+              to: owner.email,
+              subject: "Renouvellement HomeBudget PRO confirmé",
+              react: RenewalReceiptEmail({ familyName: paidFamily.name, renewalDate, nextRenewalDate, appUrl: APP_URL }),
+            });
+          }
+        }
+      }
       break;
     }
 
