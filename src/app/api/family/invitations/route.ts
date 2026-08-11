@@ -5,12 +5,17 @@ import { z } from "zod";
 import { getCurrentSession } from "@/lib/auth";
 import { invitationRepository } from "@/lib/repositories/invitations";
 import { getInvitationExpirationDate } from "@/lib/invitations";
+import { sendEmail } from "@/lib/email";
+import InvitationEmail from "@/emails/InvitationEmail";
+
+const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
 const generateRawCode = (): string =>
   crypto.randomBytes(8).toString("hex").toUpperCase();
 
 const postBodySchema = z.object({
   expirationDays: z.number().int().min(1).max(365).optional(),
+  inviteeEmail: z.string().email().optional(),
 });
 
 // Guard OWNER : retourne la session ou une Response d'erreur
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Payload invalide" }, { status: 400 });
   }
 
-  const { expirationDays } = parsed.data;
+  const { expirationDays, inviteeEmail } = parsed.data;
   const familyId = session.user!.familyId;
 
   // Révoquer les invitations actives existantes avant d'en créer une nouvelle
@@ -72,6 +77,28 @@ export async function POST(request: NextRequest) {
     createdByUserId: session.user!.id,
     expiresAt,
   });
+
+  if (inviteeEmail) {
+    const { prisma } = await import("@/lib/prisma");
+    const family = await prisma.family.findUnique({
+      where: { id: familyId },
+      select: { name: true },
+    });
+    const expiresAtFormatted = invitation.expiresAt
+      ? invitation.expiresAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+      : null;
+    void sendEmail({
+      to: inviteeEmail,
+      subject: `${session.user!.name ?? "Quelqu'un"} vous invite à rejoindre HomeBudget`,
+      react: InvitationEmail({
+        familyName: family?.name ?? "votre foyer",
+        inviterName: session.user!.name ?? "L'administrateur",
+        inviteCode: rawCode,
+        appUrl: APP_URL,
+        expiresAt: expiresAtFormatted,
+      }),
+    });
+  }
 
   // rawCode exposé une seule fois — non stocké en clair côté serveur
   return NextResponse.json(

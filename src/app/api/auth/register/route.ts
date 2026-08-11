@@ -37,6 +37,8 @@ const registerSchema = z.discriminatedUnion("mode", [
   }),
 ]);
 
+const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+
 export async function POST(request: Request) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     ?? request.headers.get("x-real-ip")
@@ -100,6 +102,12 @@ export async function POST(request: Request) {
 
     await ensureMemberForUser(newUser.id, family.id, name);
 
+    void sendEmail({
+      to: email,
+      subject: `Bienvenue dans le foyer ${family.name} sur HomeBudget !`,
+      react: WelcomeEmail({ userName: name, familyName: family.name, appUrl: APP_URL }),
+    });
+
     return NextResponse.json({
       success: true,
       familyInviteCode: family.inviteCode,
@@ -150,11 +158,10 @@ export async function POST(request: Request) {
 
   await ensureMemberForUser(newUser.id, family.id, name);
 
-  const appUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   void sendEmail({
     to: email,
     subject: "Bienvenue sur HomeBudget !",
-    react: WelcomeEmail({ userName: name, familyName: family.name, appUrl }),
+    react: WelcomeEmail({ userName: name, familyName: family.name, appUrl: APP_URL }),
   });
 
   return NextResponse.json({
