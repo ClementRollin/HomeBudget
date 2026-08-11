@@ -15,9 +15,10 @@ import {
 type Props = {
   familyName: string;
   portalUrl: string;
+  supportEmail: string;
 };
 
-export default function PaymentFailedEmail({ familyName, portalUrl }: Props) {
+export default function PaymentFailedEmail({ familyName, portalUrl, supportEmail }: Props) {
   return (
     <Html>
       <Head />
@@ -42,7 +43,7 @@ export default function PaymentFailedEmail({ familyName, portalUrl }: Props) {
           </Section>
           <Hr style={hr} />
           <Text style={footer}>
-            Si vous avez des questions, contactez-nous à contact@[VOTRE-DOMAINE].
+            Si vous avez des questions, contactez-nous à {supportEmail}.
           </Text>
         </Container>
       </Body>

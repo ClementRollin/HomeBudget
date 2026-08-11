@@ -11,6 +11,7 @@ import SubscriptionCanceledEmail from "@/emails/SubscriptionCanceledEmail";
 export const dynamic = "force-dynamic";
 
 const APP_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? "support@homebudget.app";
 
 async function getFamilyEmail(familyId: string): Promise<{ email: string; name: string } | null> {
   const user = await prisma.user.findFirst({
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
       break;
     }
 
+    case "customer.subscription.canceled":
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       await prisma.family.updateMany({
@@ -153,6 +155,7 @@ export async function POST(request: NextRequest) {
               react: PaymentFailedEmail({
                 familyName: family.name,
                 portalUrl: portalRes?.url ?? `${APP_URL}/settings`,
+                supportEmail: SUPPORT_EMAIL,
               }),
             });
           }
