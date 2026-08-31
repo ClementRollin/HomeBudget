@@ -39,16 +39,15 @@ jobs:
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY_TEST }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET_TEST }}
 
-  # Déploiement preview Vercel sur PR develop (commenté jusqu'à config Vercel)
-  # deploy-preview:
-  #   name: Deploy Preview
-  #   needs: ci
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Deploy to Vercel Preview
-  #       uses: amondnet/vercel-action@v25
-  #       with:
-  #         vercel-token: ${{ secrets.VERCEL_TOKEN }}
-  #         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-  #         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+  deploy-preview:
+    name: Deploy Preview
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Deploy to Vercel Preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
