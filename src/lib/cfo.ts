@@ -88,6 +88,15 @@ export const computeCFOAlerts = (
 ): CFOAlert[] => {
   const alerts: CFOAlert[] = [];
 
+  if (metrics.monthsOfData === 0) {
+    alerts.push({
+      type: "info",
+      message:
+        "Aucune fiche mensuelle enregistrée. Créez votre première fiche pour obtenir une analyse budgétaire.",
+    });
+    return alerts;
+  }
+
   if (metrics.netWorth < 0) {
     alerts.push({
       type: "danger",
