@@ -44,3 +44,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# security scan reports (generated artifacts)
+.claude/scan-reports/
+checkov-report.json
+checkov-stderr.txt
+gitleaks-report.json
+gitleaks-stderr.txt
+grype-report.json
+grype-stderr.txt
+hadolint-report.json
+hadolint-stderr.txt
+semgrep-report.json
+semgrep-stderr.txt
+npm-audit.json
+npm-audit-stderr.txt
+package-leakage-report.json
+precommit-scan-*.md
+
+# Claude Code local settings (machine-specific paths)
+.claude/settings.local.json
