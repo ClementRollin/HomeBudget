@@ -110,12 +110,41 @@ export const computeCFOAlerts = (
       message: `Votre taux d'endettement est élevé (${(metrics.debtRatio * 100).toFixed(0)} % de vos actifs). Envisagez de réduire vos dettes en priorité.`,
     });
   }
-  if (metrics.avgSavingsRate < 0.1 && metrics.avgMonthlyIncome > 0) {
+  if (metrics.avgSavingsRate < 0 && metrics.avgMonthlyIncome > 0) {
+    alerts.push({
+      type: "danger",
+      message: `Taux d'épargne négatif (${(metrics.avgSavingsRate * 100).toFixed(1)} %) : vos dépenses dépassent vos revenus. Situation non soutenable à terme.`,
+    });
+  } else if (metrics.avgSavingsRate < 0.1 && metrics.avgMonthlyIncome > 0) {
     alerts.push({
       type: "warning",
-      message: `Votre taux d'épargne moyen (${(metrics.avgSavingsRate * 100).toFixed(1)} %) est inférieur à 10 %. Cible recommandée : 20 %.`,
+      message: `Taux d'épargne moyen faible (${(metrics.avgSavingsRate * 100).toFixed(1)} %) — inférieur à 10 %. Cible recommandée : 20 %.`,
     });
   }
+
+  if (metrics.totalMonthlyDebt > 0 && metrics.avgMonthlyIncome > 0) {
+    const effortRate = metrics.totalMonthlyDebt / metrics.avgMonthlyIncome;
+    if (effortRate > 0.5) {
+      alerts.push({
+        type: "danger",
+        message: `Taux d'effort critique : ${(effortRate * 100).toFixed(0)} % de vos revenus mensuels absorbés par les mensualités de dettes. Toute demande de crédit sera refusée.`,
+      });
+    } else if (effortRate > 0.35) {
+      alerts.push({
+        type: "warning",
+        message: `Taux d'effort élevé : ${(effortRate * 100).toFixed(0)} % de vos revenus mensuels absorbés par les mensualités (seuil bancaire français : 35 %).`,
+      });
+    }
+  }
+
+  if (metrics.totalAssets === 0 && metrics.avgMonthlyIncome > 0) {
+    alerts.push({
+      type: "info",
+      message:
+        "Aucun actif patrimonial enregistré. Commencez à constituer votre patrimoine (PEA, Assurance-Vie, Livret A…) pour bâtir un filet de sécurité.",
+    });
+  }
+
   goalProgress.filter((g) => g.atRisk).forEach((g) => {
     alerts.push({
       type: "warning",
