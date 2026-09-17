@@ -113,38 +113,20 @@ npx prisma migrate status
 
 ### Onboarding d'inscription — préremplissage du profil
 
-L'onboarding post-inscription actuel est purement informatif (3 écrans : bienvenue, code d'invitation, c'est parti).
-Il ne collecte aucune donnée utilisateur, ce qui oblige à remplir manuellement son profil une fois dans l'app.
-
-**Objectif :** Étendre le wizard `/onboarding` pour collecter et sauvegarder les informations de base
-dès la première connexion, avant de rediriger vers le dashboard.
-
-**Étapes à ajouter dans le wizard :**
-
-1. **Bienvenue** — existant, inchangé
-2. **Votre profil** *(nouveau)* — date de naissance (optionnel) + rôle fiscal (DECLARANT_1 par défaut)
-   - Sauvegarde via `PATCH /api/family/members/:memberId`
-3. **Votre situation** *(nouveau)* — en couple / pacsé (toggle isCoupled)
-   - Sauvegarde via `PUT /api/fiscal-config` → upsert `FiscalConfig`
-4. **Votre famille** — existant (affichage code d'invitation)
-5. **C'est parti** — existant, inchangé
-
-**API utilisées :** toutes déjà en place, aucune migration requise.
-**Fichiers à modifier :** `src/app/(setup)/onboarding/page.tsx` (passer `memberId`),
-`src/app/(setup)/onboarding/OnboardingWizard.tsx` (ajouter les 2 étapes + logique de sauvegarde).
-
-- [ ] Implémenter les étapes "Votre profil" et "Votre situation" dans `OnboardingWizard`
+- [x] Implémenter les étapes "Votre profil" et "Votre situation" dans `OnboardingWizard`
+  — Wizard 5 étapes (bienvenue, profil, situation, famille, c'est parti) avec sauvegarde via
+  `PATCH /api/family/members/:memberId`, `PUT /api/fiscal-config` et `POST /api/onboarding/complete`
 - [ ] Tester le wizard en local — vérifier que les données sont bien persistées
-- [ ] S'assurer que le wizard reste skippable (champs optionnels, bouton "Passer")
+- [x] S'assurer que le wizard reste skippable (champs optionnels, bouton "Passer")
 
 ---
 
 ## 6. Vérifications avant déploiement
 
 ### Code
-- [ ] `npm run typecheck` passe sans erreur
-- [ ] `npm run lint` passe avec `--max-warnings=0`
-- [ ] `npm run test:unit` — 99/99 tests passent
+- [x] `npm run typecheck` passe sans erreur
+- [x] `npm run lint` passe avec `--max-warnings=0`
+- [x] `npm run test` — 138/138 tests passent (9 fichiers de test)
 - [ ] `npm run build` passe sans erreur (build Next.js)
 
 ### Légal (à compléter avant mise en ligne)
@@ -197,4 +179,4 @@ En cas de problème critique après déploiement :
 
 ---
 
-*Dernière mise à jour : août 2025*
+*Dernière mise à jour : septembre 2026*
