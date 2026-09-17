@@ -82,7 +82,7 @@ export default function ConfidentialitePage() {
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-white">4. Destinataires des données</h2>
         <p className="text-slate-300">
-          Nous ne vendons pas vos données. Elles peuvent être communiquées aux sous-traitants
+          Nous ne vendons pas vos données. Elles peuvent être communiquées aux partenaires
           suivants dans le cadre strict de la fourniture du Service :
         </p>
         <ul className="list-disc list-inside text-slate-300 space-y-1">
@@ -193,7 +193,44 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-white">8. Sécurité des données</h2>
+        <h2 className="text-lg font-semibold text-white">8. Traitement automatisé par intelligence artificielle</h2>
+        <p className="text-slate-300">
+          HomeBudget propose une fonctionnalité optionnelle d'extraction automatique des données
+          fiscales à partir de documents téléversés (déclarations 2042, avis d'imposition).
+          Ce traitement est réalisé par le modèle d'intelligence artificielle <strong>Gemini</strong>
+          édité par Google LLC, configuré avec une politique de rétention zéro (les données ne sont
+          pas conservées par Google au-delà du traitement).
+        </p>
+        <p className="text-slate-300">
+          Ce traitement constitue une aide à la saisie et non une décision automatisée
+          au sens de l'article 22 du RGPD. Toutes les données extraites sont présentées
+          à l'utilisateur pour validation explicite avant enregistrement. L'utilisateur
+          peut refuser l'extraction et saisir ses données manuellement à tout moment.
+        </p>
+        <ul className="list-disc list-inside text-slate-300 space-y-1">
+          <li><strong>Finalité</strong> : pré-remplissage du formulaire de simulation fiscale</li>
+          <li><strong>Données transmises</strong> : uniquement le document téléversé par l'utilisateur</li>
+          <li><strong>Durée de conservation Google</strong> : aucune (rétention zéro configurée)</li>
+          <li><strong>Droit d'opposition</strong> : l'utilisateur peut saisir ses données manuellement
+            sans recourir à l'extraction IA</li>
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-white">9. Délégué à la Protection des Données (DPO)</h2>
+        <p className="text-slate-300">
+          Pour toute question relative à la protection de vos données personnelles ou pour
+          exercer vos droits, vous pouvez contacter notre correspondant dédié à l'adresse :{" "}
+          <a href="mailto:rgpd@homebudget.app" className="text-amber-400 hover:underline">
+            rgpd@homebudget.app
+          </a>
+          . Nous nous engageons à répondre dans un délai d'un mois à compter de la réception
+          de votre demande.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-white">10. Sécurité des données</h2>
         <p className="text-slate-300">
           L'Éditeur met en œuvre les mesures techniques et organisationnelles suivantes pour
           protéger vos données :
@@ -210,9 +247,9 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-white">9. Transferts hors UE</h2>
+        <h2 className="text-lg font-semibold text-white">11. Transferts hors UE</h2>
         <p className="text-slate-300">
-          Certains de nos sous-traitants (Vercel, Stripe, Resend, Google) sont établis aux
+          Certains de nos partenaires (Vercel, Stripe, Resend, Google) sont établis aux
           États-Unis. Ces transferts sont encadrés par les mécanismes suivants : clauses
           contractuelles types (CCT) approuvées par la Commission européenne, et/ou adhésion
           au cadre transatlantique de protection des données (Data Privacy Framework). Vous
@@ -225,7 +262,7 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-white">10. Modification de la politique</h2>
+        <h2 className="text-lg font-semibold text-white">12. Modification de la politique</h2>
         <p className="text-slate-300">
           L'Éditeur se réserve le droit de modifier la présente politique à tout moment.
           Les utilisateurs sont informés par e-mail de tout changement substantiel au moins

@@ -80,8 +80,12 @@ Configurer dans Vercel (Settings > Environment Variables) pour l'environnement P
 | `STRIPE_PRICE_ID_PRO_MONTHLY` | Stripe Dashboard > Products | ✅ |
 | `STRIPE_PRICE_ID_PRO_ANNUAL` | Stripe Dashboard > Products | optionnel |
 | `NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY` | = `STRIPE_PRICE_ID_PRO_MONTHLY` | ✅ |
+| `NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL` | = `STRIPE_PRICE_ID_PRO_ANNUAL` | optionnel |
 | `GEMINI_API_KEY` | Google Cloud Console | ✅ |
 | `BLOB_READ_WRITE_TOKEN` | Vercel > Storage > Blob | ✅ |
+| `RESEND_API_KEY` | Resend Dashboard > API Keys | ✅ |
+| `EMAIL_FROM` | `HomeBudget <no-reply@[votre-domaine]>` — domaine vérifié dans Resend | ✅ |
+| `SUPPORT_EMAIL` | `support@[votre-domaine]` — affiché dans les emails d'échec de paiement | ✅ |
 
 ---
 
@@ -105,12 +109,24 @@ npx prisma migrate status
 
 ---
 
-## 5. Vérifications avant déploiement
+## 5. Développements restants avant go-live
+
+### Onboarding d'inscription — préremplissage du profil
+
+- [x] Implémenter les étapes "Votre profil" et "Votre situation" dans `OnboardingWizard`
+  — Wizard 5 étapes (bienvenue, profil, situation, famille, c'est parti) avec sauvegarde via
+  `PATCH /api/family/members/:memberId`, `PUT /api/fiscal-config` et `POST /api/onboarding/complete`
+- [ ] Tester le wizard en local — vérifier que les données sont bien persistées
+- [x] S'assurer que le wizard reste skippable (champs optionnels, bouton "Passer")
+
+---
+
+## 6. Vérifications avant déploiement
 
 ### Code
-- [ ] `npm run typecheck` passe sans erreur
-- [ ] `npm run lint` passe avec `--max-warnings=0`
-- [ ] `npm run test:unit` — 99/99 tests passent
+- [x] `npm run typecheck` passe sans erreur
+- [x] `npm run lint` passe avec `--max-warnings=0`
+- [x] `npm run test` — 138/138 tests passent (9 fichiers de test)
 - [ ] `npm run build` passe sans erreur (build Next.js)
 
 ### Légal (à compléter avant mise en ligne)
@@ -142,7 +158,7 @@ npx prisma migrate status
 
 ---
 
-## 6. Post-déploiement
+## 7. Post-déploiement
 
 - [ ] Monitorer les logs Vercel les premières 24h
 - [ ] Configurer des alertes d'erreur (Vercel > Notifications ou Sentry)
@@ -152,7 +168,7 @@ npx prisma migrate status
 
 ---
 
-## 7. Rollback plan
+## 8. Rollback plan
 
 En cas de problème critique après déploiement :
 
@@ -163,4 +179,4 @@ En cas de problème critique après déploiement :
 
 ---
 
-*Dernière mise à jour : août 2025*
+*Dernière mise à jour : septembre 2026*

@@ -52,6 +52,19 @@ export async function POST(request: NextRequest) {
 
   const securePayload = await encryptSheetPayload(familyId, parsed.data);
 
+  // Les charges récurrentes actives sont recopiées telles quelles (même données chiffrées).
+  // Les données manuelles de l'utilisateur sont ajoutées ensuite.
+  const activeRecurring = await prisma.recurringCharge.findMany({
+    where: { familyId, isActive: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const recurringPayload = activeRecurring.map((rc) => ({
+    category: rc.category,
+    memberId: rc.memberId,
+    encryptedLabel: rc.encryptedLabel,
+    encryptedAmount: rc.encryptedAmount,
+  }));
+
   const sheet = await prisma.sheet.create({
     data: {
       year: parsed.data.year,
@@ -59,7 +72,7 @@ export async function POST(request: NextRequest) {
       familyId,
       ownerId: userId,
       salaries: { create: securePayload.salaries },
-      charges: { create: securePayload.charges },
+      charges: { create: [...recurringPayload, ...securePayload.charges] },
       budgets: { create: securePayload.budgets },
     },
     include: {
