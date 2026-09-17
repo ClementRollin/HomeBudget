@@ -13,6 +13,7 @@ import { UpgradeOptions, PlanSwitch } from "@/components/subscription/PlanSwitch
 import InvoiceList, { mapStripeInvoice } from "@/components/subscription/InvoiceList";
 import PaymentMethodCard from "@/components/subscription/PaymentMethodCard";
 import AccountActions from "@/components/account/AccountActions";
+import RecurringChargesSection from "@/components/settings/RecurringChargesSection";
 import type Stripe from "stripe";
 
 const limits = [
@@ -36,16 +37,24 @@ export default async function SettingsPage() {
   const session = await getCurrentSession();
   if (!session?.user?.familyId) redirect("/");
 
-  let family = await prisma.family.findUnique({
-    where: { id: session.user.familyId },
-    select: {
-      subscriptionStatus: true,
-      subscriptionEndsAt: true,
-      stripeCustomerId: true,
-      stripeSubscriptionId: true,
-      stripePriceId: true,
-    },
-  });
+  const [familyResult, members] = await Promise.all([
+    prisma.family.findUnique({
+      where: { id: session.user.familyId },
+      select: {
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+        stripePriceId: true,
+      },
+    }),
+    prisma.familyMember.findMany({
+      where: { familyId: session.user.familyId },
+      select: { id: true, displayName: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
+  let family = familyResult;
   if (!family) redirect("/");
 
   // Always sync from Stripe when a customer exists — ensures DB stays consistent
@@ -247,6 +256,9 @@ export default async function SettingsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Charges récurrentes */}
+      <RecurringChargesSection members={members} />
 
       {/* Données personnelles */}
       <div className="rounded-2xl border border-border bg-card p-6 space-y-4">

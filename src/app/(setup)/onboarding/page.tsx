@@ -20,6 +20,7 @@ const OnboardingPage = async () => {
       familyName={family?.name ?? "Mon foyer"}
       inviteCode={family?.inviteCode ?? ""}
       memberCount={memberCount}
+      memberId={session.user.familyMemberId}
     />
   );
 };

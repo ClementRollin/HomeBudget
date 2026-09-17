@@ -80,8 +80,12 @@ Configurer dans Vercel (Settings > Environment Variables) pour l'environnement P
 | `STRIPE_PRICE_ID_PRO_MONTHLY` | Stripe Dashboard > Products | ✅ |
 | `STRIPE_PRICE_ID_PRO_ANNUAL` | Stripe Dashboard > Products | optionnel |
 | `NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY` | = `STRIPE_PRICE_ID_PRO_MONTHLY` | ✅ |
+| `NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL` | = `STRIPE_PRICE_ID_PRO_ANNUAL` | optionnel |
 | `GEMINI_API_KEY` | Google Cloud Console | ✅ |
 | `BLOB_READ_WRITE_TOKEN` | Vercel > Storage > Blob | ✅ |
+| `RESEND_API_KEY` | Resend Dashboard > API Keys | ✅ |
+| `EMAIL_FROM` | `HomeBudget <no-reply@[votre-domaine]>` — domaine vérifié dans Resend | ✅ |
+| `SUPPORT_EMAIL` | `support@[votre-domaine]` — affiché dans les emails d'échec de paiement | ✅ |
 
 ---
 
@@ -105,7 +109,37 @@ npx prisma migrate status
 
 ---
 
-## 5. Vérifications avant déploiement
+## 5. Développements restants avant go-live
+
+### Onboarding d'inscription — préremplissage du profil
+
+L'onboarding post-inscription actuel est purement informatif (3 écrans : bienvenue, code d'invitation, c'est parti).
+Il ne collecte aucune donnée utilisateur, ce qui oblige à remplir manuellement son profil une fois dans l'app.
+
+**Objectif :** Étendre le wizard `/onboarding` pour collecter et sauvegarder les informations de base
+dès la première connexion, avant de rediriger vers le dashboard.
+
+**Étapes à ajouter dans le wizard :**
+
+1. **Bienvenue** — existant, inchangé
+2. **Votre profil** *(nouveau)* — date de naissance (optionnel) + rôle fiscal (DECLARANT_1 par défaut)
+   - Sauvegarde via `PATCH /api/family/members/:memberId`
+3. **Votre situation** *(nouveau)* — en couple / pacsé (toggle isCoupled)
+   - Sauvegarde via `PUT /api/fiscal-config` → upsert `FiscalConfig`
+4. **Votre famille** — existant (affichage code d'invitation)
+5. **C'est parti** — existant, inchangé
+
+**API utilisées :** toutes déjà en place, aucune migration requise.
+**Fichiers à modifier :** `src/app/(setup)/onboarding/page.tsx` (passer `memberId`),
+`src/app/(setup)/onboarding/OnboardingWizard.tsx` (ajouter les 2 étapes + logique de sauvegarde).
+
+- [ ] Implémenter les étapes "Votre profil" et "Votre situation" dans `OnboardingWizard`
+- [ ] Tester le wizard en local — vérifier que les données sont bien persistées
+- [ ] S'assurer que le wizard reste skippable (champs optionnels, bouton "Passer")
+
+---
+
+## 6. Vérifications avant déploiement
 
 ### Code
 - [ ] `npm run typecheck` passe sans erreur
@@ -142,7 +176,7 @@ npx prisma migrate status
 
 ---
 
-## 6. Post-déploiement
+## 7. Post-déploiement
 
 - [ ] Monitorer les logs Vercel les premières 24h
 - [ ] Configurer des alertes d'erreur (Vercel > Notifications ou Sentry)
@@ -152,7 +186,7 @@ npx prisma migrate status
 
 ---
 
-## 7. Rollback plan
+## 8. Rollback plan
 
 En cas de problème critique après déploiement :
 
