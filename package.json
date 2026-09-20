@@ -31,15 +31,20 @@
     "@react-email/components": "^1.0.12",
     "@vercel/blob": "^2.6.1",
     "bcryptjs": "^3.0.3",
-    "next": "^16.3.0",
+    "nanoid": "^6.0.1",
+    "next": "^16.3.5",
     "next-auth": "^5.0.0-beta.32",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",
     "recharts": "^3.10.1",
     "resend": "^6.18.1",
+    "sharp": "^0.35.4",
     "stripe": "^22.4.0",
     "zod": "^4.1.13"
+  },
+  "overrides": {
+    "deepmerge-ts": ">=8.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
