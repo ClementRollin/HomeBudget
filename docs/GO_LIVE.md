@@ -107,31 +107,57 @@ Vérifier que toutes les migrations sont appliquées :
 npx prisma migrate status
 ```
 
+> **Note** : La migration `20260907000000_add_recurring_charges` est prête et incluse dans `develop`.
+
 ---
 
 ## 5. Développements restants avant go-live
 
-### Onboarding d'inscription — préremplissage du profil
+### Fonctionnalités — toutes implémentées ✅
 
-- [x] Implémenter les étapes "Votre profil" et "Votre situation" dans `OnboardingWizard`
-  — Wizard 5 étapes (bienvenue, profil, situation, famille, c'est parti) avec sauvegarde via
-  `PATCH /api/family/members/:memberId`, `PUT /api/fiscal-config` et `POST /api/onboarding/complete`
-- [ ] Tester le wizard en local — vérifier que les données sont bien persistées
-- [x] S'assurer que le wizard reste skippable (champs optionnels, bouton "Passer")
+- [x] Authentification (login, register, session, NextAuth 5)
+- [x] Onboarding wizard 5 étapes (bienvenue, profil, situation, famille, c'est parti)
+  — sauvegarde via `PATCH /api/family/members/:memberId`, `PUT /api/fiscal-config`, `POST /api/onboarding/complete`
+- [x] Wizard skippable (tous les champs optionnels, bouton "Passer")
+- [x] Budget mensuel (fiches, salaires, charges FIXE/EXCEPTIONNEL, enveloppes budget)
+- [x] Charges récurrentes (CRUD complet, API, migration Prisma, injection dans fiches)
+- [x] Patrimoine (actifs, dettes, simulation remboursement anticipé, objectifs)
+- [x] Fiscalité (config foyer, simulation IR 2024, extraction IA Gemini, 2042)
+- [x] Bilan CFO (métriques, alertes danger/warning/info, objectifs à risque)
+- [x] Famille (membres, invitations, codes d'invitation)
+- [x] Abonnement Stripe (FREE/PRO, checkout, portail self-service, webhooks)
+- [x] Analytics / Dashboard / Comparaison N-1
+- [x] Emails transactionnels (7 templates : bienvenue, invitation, paiement, résiliation…)
+- [x] Compte utilisateur (export RGPD, suppression compte)
+- [x] Admin panel (gestion familles)
+- [x] Pages légales (CGU, CGV, Mentions légales, Politique de confidentialité RGPD)
+
+### À tester manuellement avant déploiement
+
+- [ ] Tester le wizard onboarding en local — vérifier la persistance des données
+- [ ] Tester l'affichage des charges récurrentes dans /settings (nouvelle feature)
 
 ---
 
 ## 6. Vérifications avant déploiement
 
-### Code
-- [x] `npm run typecheck` passe sans erreur
-- [x] `npm run lint` passe avec `--max-warnings=0`
-- [x] `npm run test` — 138/138 tests passent (9 fichiers de test)
-- [ ] `npm run build` passe sans erreur (build Next.js)
+### Code ✅
+- [x] `npm run typecheck` — 0 erreur
+- [x] `npm run lint` — 0 warning (`--max-warnings=0`)
+- [x] `npm run test` — **138/138 tests passent** (9 fichiers : crypto, CFO, fiscalité, sheets, subscription, auth, rate-limit, register-invite, api/sheets)
+- [x] `npm run build` — **✅ 41 pages, 0 erreur** (validé 2026-09-17)
 
-### Légal (à compléter avant mise en ligne)
-- [ ] Renseigner les informations société dans les pages légales (`[NOM / RAISON SOCIALE]`, `[SIRET]`, `[ADRESSE]`, `contact@[DOMAINE]`)
-- [ ] Vérifier que les CGU, CGV et politique de confidentialité sont à jour
+### Sécurité dépendances ✅/⚠️ (branche fix/pre-golive-deps — 2026-09-17)
+- [x] `next@16.3.5` — **2 CVE Critical RCE corrigés** (GHSA-p293, GHSA-2xp9) ✅
+- [x] `nanoid@6.0.1` — CVE High corrigé ✅
+- [x] `sharp@0.35.4` — CVE High corrigé ✅
+- [ ] `deepmerge-ts` dans `@prisma/config` — CVE High (stack exhaustion) **RISQUE ACCEPTÉ** : l'override npm nested (`@prisma/config → deepmerge-ts`) est inefficace (limitation npm — `npm list` confirme `deepmerge-ts@7.1.5 invalid` dans le sous-arbre `@prisma/config`). L'override flat global risquerait de casser Prisma 6.x. Vecteur d'attaque = build-tool only (traitement de graphes d'objets internes à Prisma CLI, non exposé aux inputs utilisateurs externes). Risque accepté pour le go-live.
+
+### Légal ⚠️ (obligatoire avant mise en ligne — LCEN art. 6 et 19)
+- [ ] Renseigner les informations société dans `mentions-legales/page.tsx` et `cgv/page.tsx` :
+  `[NOM / RAISON SOCIALE]`, `[FORME JURIDIQUE]`, `[SIRET]`, `[ADRESSE]`, `contact@[DOMAINE]`
+- [x] Politique de confidentialité RGPD complète (section IA Gemini Art. 22 + contact DPO)
+- [x] CGU complètes
 - [ ] Faire relire les documents légaux par un juriste (recommandé)
 - [ ] Enregistrer le traitement auprès de la CNIL si nécessaire (registro)
 
@@ -142,10 +168,10 @@ npx prisma migrate status
 - [ ] Tester la résiliation depuis le Customer Portal
 - [ ] Vérifier que le plan repasse à FREE après résiliation
 
-### Application
+### Application (tests manuels)
 - [ ] Tester l'inscription (mode `create` et mode `join`)
-- [ ] Tester l'onboarding wizard
-- [ ] Tester la création d'une fiche mensuelle
+- [ ] Tester l'onboarding wizard (persistance des données)
+- [ ] Tester la création d'une fiche mensuelle (avec injection charges récurrentes)
 - [ ] Tester l'upload d'un document fiscal et l'extraction IA
 - [ ] Vérifier les limites du plan FREE (3 fiches, 5 actifs, etc.)
 - [ ] Tester les pages légales depuis `/legal/cgu`, `/legal/cgv`, etc.
