@@ -1,28 +1,25 @@
 /* eslint-disable react/no-unescaped-entities */
 export const metadata = { title: "Mentions légales — HomeBudget" };
 
-// ⚠️  SECTIONS MARQUÉES [À COMPLÉTER] : informations légalement obligatoires
-//     (art. 6 LCEN) à renseigner avant la mise en ligne.
 
 export default function MentionsLegalesPage() {
   return (
     <>
       <h1 className="text-3xl font-bold text-white">Mentions légales</h1>
-      <p className="text-slate-400 text-sm">Dernière mise à jour : août 2025</p>
+      <p className="text-slate-400 text-sm">Dernière mise à jour : septembre 2026</p>
 
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-white">Éditeur du site</h2>
         <p className="text-slate-300">
-          Le site <strong>homebudget.app</strong> est édité par :<br />
-          <strong>[NOM / RAISON SOCIALE]</strong><br />
-          [FORME JURIDIQUE] — Capital : [MONTANT] €<br />
-          Siège social : [ADRESSE COMPLÈTE]<br />
-          SIRET : [NUMÉRO SIRET]<br />
-          RCS : [VILLE D'IMMATRICULATION] — [NUMÉRO RCS]<br />
-          Directeur de la publication : [NOM DU RESPONSABLE]<br />
+          Le site <strong>home-budget-lemon.vercel.app</strong> est édité par :<br />
+          <strong>Dev &amp; Com</strong><br />
+          Auto-entrepreneur<br />
+          Siège social : 6 rue Audibert et Lavirotte, 69008 Lyon<br />
+          SIRET : 920 471 786 000 11<br />
+          Directeur de la publication : Clément ROLLIN<br />
           Contact :{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
         </p>
       </section>
@@ -96,8 +93,8 @@ export default function MentionsLegalesPage() {
             Politique de confidentialité
           </a>
           . Pour exercer vos droits, contactez-nous à{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           .
         </p>

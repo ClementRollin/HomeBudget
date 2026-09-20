@@ -12,7 +12,7 @@ export default function CguPage() {
         <p className="text-slate-300">
           Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») régissent l'accès
           et l'utilisation de l'application web HomeBudget accessible à l'adresse{" "}
-          <strong>homebudget.app</strong> (ci-après « le Service »), éditée par son éditeur
+          <strong>home-budget-lemon.vercel.app</strong> (ci-après « le Service »), éditée par son éditeur
           (ci-après « l'Éditeur »). En créant un compte, l'utilisateur accepte sans réserve
           l'intégralité des présentes CGU.
         </p>
@@ -47,8 +47,8 @@ export default function CguPage() {
           un mot de passe. L'utilisateur s'engage à fournir des informations exactes et à
           maintenir la confidentialité de ses identifiants. Tout accès non autorisé à un compte
           tiers doit être signalé immédiatement à{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           .
         </p>

@@ -1,25 +1,23 @@
 /* eslint-disable react/no-unescaped-entities */
 export const metadata = { title: "Conditions Générales de Vente — HomeBudget" };
 
-// ⚠️  SECTIONS MARQUÉES [À COMPLÉTER] : informations légales obligatoires
-//     à renseigner avant la mise en ligne (raison sociale, SIRET, adresse).
 
 export default function CgvPage() {
   return (
     <>
       <h1 className="text-3xl font-bold text-white">Conditions Générales de Vente</h1>
-      <p className="text-slate-400 text-sm">Dernière mise à jour : août 2025</p>
+      <p className="text-slate-400 text-sm">Dernière mise à jour : septembre 2026</p>
 
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-white">1. Vendeur</h2>
         <p className="text-slate-300">
           Le présent Service est édité par :<br />
-          <strong>[NOM / RAISON SOCIALE]</strong> — [FORME JURIDIQUE]<br />
-          SIRET : [NUMÉRO SIRET]<br />
-          Siège social : [ADRESSE COMPLÈTE]<br />
+          <strong>Dev &amp; Com</strong> — Auto-entrepreneur<br />
+          SIRET : 920 471 786 000 11<br />
+          Siège social : 6 rue Audibert et Lavirotte, 69008 Lyon<br />
           Contact commercial :{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           <br />
           (ci-après « l'Éditeur »)
@@ -32,7 +30,7 @@ export default function CgvPage() {
           Les présentes Conditions Générales de Vente (ci-après « CGV ») s'appliquent à toute
           souscription au plan payant HomeBudget PRO par un utilisateur consommateur ou
           professionnel (ci-après « le Client ») sur le site{" "}
-          <strong>homebudget.app</strong>. Elles prévalent sur tout autre document, sauf accord
+          <strong>home-budget-lemon.vercel.app</strong>. Elles prévalent sur tout autre document, sauf accord
           dérogatoire exprès de l'Éditeur.
         </p>
       </section>
@@ -122,8 +120,8 @@ export default function CgvPage() {
           En cas d'interruption totale du Service imputable à l'Éditeur excédant 72 heures
           consécutives, le Client PRO peut demander un avoir ou un remboursement prorata du
           mois en cours en contactant{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>{" "}
           dans les 30 jours suivant l'incident. Les demandes pour d'autres motifs sont
           examinées au cas par cas.
@@ -134,9 +132,9 @@ export default function CgvPage() {
         <h2 className="text-lg font-semibold text-white">9. Facturation et TVA</h2>
         <p className="text-slate-300">
           Les factures sont émises au nom de l'Éditeur et accessibles depuis les Paramètres
-          du Service (section « Historique des factures »). La TVA applicable est celle du
-          pays de résidence du Client, conformément à la réglementation TVA sur les services
-          numériques B2C (directive 2006/112/CE modifiée).
+          du Service (section « Historique des factures »). L'Éditeur est en franchise de TVA
+          conformément à l'article 293 B du CGI. Aucune TVA n'est applicable ; les factures
+          portent la mention « TVA non applicable, art. 293 B du CGI ».
         </p>
       </section>
 

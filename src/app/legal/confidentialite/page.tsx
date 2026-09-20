@@ -11,9 +11,9 @@ export default function ConfidentialitePage() {
         <h2 className="text-lg font-semibold text-white">1. Responsable du traitement</h2>
         <p className="text-slate-300">
           Le responsable du traitement des données à caractère personnel est l'éditeur de
-          l'application HomeBudget (homebudget.app), joignable à l'adresse :{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          l'application HomeBudget (home-budget-lemon.vercel.app), joignable à l'adresse :{" "}
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           .
         </p>
@@ -157,8 +157,8 @@ export default function ConfidentialitePage() {
         </ul>
         <p className="text-slate-300 mt-2">
           Pour exercer ces droits, adressez votre demande à{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>{" "}
           en indiquant votre adresse e-mail de compte. Nous nous engageons à y répondre dans
           un délai d'un mois (délai pouvant être prolongé à 3 mois pour les demandes complexes,
@@ -221,8 +221,8 @@ export default function ConfidentialitePage() {
         <p className="text-slate-300">
           Pour toute question relative à la protection de vos données personnelles ou pour
           exercer vos droits, vous pouvez contacter notre correspondant dédié à l'adresse :{" "}
-          <a href="mailto:rgpd@homebudget.app" className="text-amber-400 hover:underline">
-            rgpd@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           . Nous nous engageons à répondre dans un délai d'un mois à compter de la réception
           de votre demande.
@@ -254,8 +254,8 @@ export default function ConfidentialitePage() {
           contractuelles types (CCT) approuvées par la Commission européenne, et/ou adhésion
           au cadre transatlantique de protection des données (Data Privacy Framework). Vous
           pouvez obtenir copie des garanties mises en place en écrivant à{" "}
-          <a href="mailto:contact@homebudget.app" className="text-amber-400 hover:underline">
-            contact@homebudget.app
+          <a href="mailto:devcom.lyon69@gmail.com" className="text-amber-400 hover:underline">
+            devcom.lyon69@gmail.com
           </a>
           .
         </p>
@@ -268,7 +268,7 @@ export default function ConfidentialitePage() {
           Les utilisateurs sont informés par e-mail de tout changement substantiel au moins
           30 jours avant son entrée en vigueur. La date de dernière mise à jour figure en
           haut de cette page. La version en vigueur est toujours accessible à l'adresse{" "}
-          <strong>homebudget.app/legal/confidentialite</strong>.
+          <strong>home-budget-lemon.vercel.app/legal/confidentialite</strong>.
         </p>
       </section>
     </>
