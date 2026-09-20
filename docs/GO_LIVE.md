@@ -147,15 +147,15 @@ npx prisma migrate status
 - [x] `npm run test` — **138/138 tests passent** (9 fichiers : crypto, CFO, fiscalité, sheets, subscription, auth, rate-limit, register-invite, api/sheets)
 - [x] `npm run build` — **✅ 41 pages, 0 erreur** (validé 2026-09-17)
 
-### Sécurité dépendances ✅/⚠️ (branche fix/pre-golive-deps — 2026-09-17)
+### Sécurité dépendances ✅ (branche fix/pre-golive-deps — 2026-09-17)
 - [x] `next@16.3.5` — **2 CVE Critical RCE corrigés** (GHSA-p293, GHSA-2xp9) ✅
 - [x] `nanoid@6.0.1` — CVE High corrigé ✅
 - [x] `sharp@0.35.4` — CVE High corrigé ✅
-- [ ] `deepmerge-ts` dans `@prisma/config` — CVE High (stack exhaustion) **RISQUE ACCEPTÉ** : l'override npm nested (`@prisma/config → deepmerge-ts`) est inefficace (limitation npm — `npm list` confirme `deepmerge-ts@7.1.5 invalid` dans le sous-arbre `@prisma/config`). L'override flat global risquerait de casser Prisma 6.x. Vecteur d'attaque = build-tool only (traitement de graphes d'objets internes à Prisma CLI, non exposé aux inputs utilisateurs externes). Risque accepté pour le go-live.
+- [x] `deepmerge-ts@8.0.2` — CVE High résolu ✅ : override flat global `"overrides": { "deepmerge-ts": ">=8.0.0" }` appliqué dans `package.json`. `npm list deepmerge-ts` confirme `@prisma/config` utilise `deepmerge-ts@8.0.2`. `prisma generate` et 138/138 tests passent.
 
-### Légal ⚠️ (obligatoire avant mise en ligne — LCEN art. 6 et 19)
-- [ ] Renseigner les informations société dans `mentions-legales/page.tsx` et `cgv/page.tsx` :
-  `[NOM / RAISON SOCIALE]`, `[FORME JURIDIQUE]`, `[SIRET]`, `[ADRESSE]`, `contact@[DOMAINE]`
+### Légal ✅ (branche fix/legal-placeholders — 2026-09-20)
+- [x] Informations société renseignées dans toutes les pages légales — Dev & Com, Auto-entrepreneur, SIRET 920 471 786 000 11, 6 rue Audibert et Lavirotte 69008 Lyon, Clément ROLLIN ✅
+- [x] Correction TVA : clause EU directive 2006/112/CE supprimée, remplacée par franchise art. 293 B CGI ✅
 - [x] Politique de confidentialité RGPD complète (section IA Gemini Art. 22 + contact DPO)
 - [x] CGU complètes
 - [ ] Faire relire les documents légaux par un juriste (recommandé)
