@@ -1,3 +1,4 @@
+import { del } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCurrentSession } from "@/lib/auth";
@@ -45,19 +46,27 @@ export const POST = async (
     // Déduire le MIME type depuis l'URL ou le blobKey
     const mimeType = inferMimeType(document.blobKey);
 
-    // Extraction via Gemini
+    // Extraction via Gemini — données envoyées en inlineData (non stockées via Files API).
+    // Le document est supprimé du Blob immédiatement après l'extraction (RGPD : rétention zéro).
     const { cases, confidence } = await extractTaxCases(fileBuffer, mimeType);
 
     // Chiffrer les cases extraites
     const encryptedExtractedCases = encryptValue(JSON.stringify(cases));
 
-    // Mettre à jour le document avec les résultats
+    // Supprimer le fichier du Blob (rétention zéro — cf. Politique de confidentialité)
+    await del(document.blobUrl).catch(() => {
+      // Suppression best-effort : ne pas bloquer si le blob est déjà absent
+    });
+
+    // Mettre à jour le document avec les résultats (blobUrl vidé car fichier supprimé)
     await prisma.taxDocument.update({
       where: { id },
       data: {
         extractionStatus: "DONE",
         encryptedExtractedCases,
         extractionConfidence: confidence,
+        blobUrl: "",
+        blobKey: "",
       },
     });
 

@@ -15,7 +15,7 @@ function getIp(req: Request): string {
   );
 }
 
-export default auth((req) => {
+export default auth(async (req) => {
   const { pathname } = req.nextUrl;
   const httpMethod = req.method ?? "GET";
   const ip = getIp(req);
@@ -23,7 +23,7 @@ export default auth((req) => {
   // ── Rate limiting login ────────────────────────────────────────────────────
   const isLoginEndpoint = pathname === "/api/auth/callback/credentials";
   if (isLoginEndpoint && httpMethod === "POST") {
-    const result = loginRateLimiter.check(ip);
+    const result = await loginRateLimiter.check(ip);
     if (!result.ok) {
       return new NextResponse("Too Many Requests", {
         status: 429,
@@ -43,7 +43,7 @@ export default auth((req) => {
     MUTATION_METHODS.has(httpMethod);
 
   if (isApiMutation) {
-    const result = apiMutationRateLimiter.check(ip);
+    const result = await apiMutationRateLimiter.check(ip);
     if (!result.ok) {
       return NextResponse.json(
         { error: "Too Many Requests" },
