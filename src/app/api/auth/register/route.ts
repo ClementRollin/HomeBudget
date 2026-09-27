@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   // Skip rate-limiting when IP cannot be determined (local dev, misconfigured proxy).
   // Sharing a single bucket for all unidentified clients would block legitimate users.
   if (ip !== null) {
-    const rateLimitResult = registerRateLimiter.check(ip);
+    const rateLimitResult = await registerRateLimiter.check(ip);
     if (!rateLimitResult.ok) {
       const retryAfterSec = Math.ceil(rateLimitResult.retryAfterMs / 1000);
       return NextResponse.json(

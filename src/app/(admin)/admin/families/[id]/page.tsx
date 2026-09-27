@@ -9,6 +9,7 @@ interface FamilyDetail {
   slug: string;
   subscriptionStatus: string;
   subscriptionEndsAt: string | null;
+  isFounder: boolean;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   createdAt: string;
@@ -31,11 +32,13 @@ function applyFamily(
   setFamily: (f: FamilyDetail) => void,
   setStatus: (s: string) => void,
   setEndsAt: (d: string) => void,
+  setIsFounder: (b: boolean) => void,
   setLoading: (b: boolean) => void,
 ) {
   setFamily(data);
   setStatus(data.subscriptionStatus);
   setEndsAt(data.subscriptionEndsAt ? data.subscriptionEndsAt.slice(0, 10) : "");
+  setIsFounder(data.isFounder);
   setLoading(false);
 }
 
@@ -47,13 +50,14 @@ export default function FamilyDetailPage() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [endsAt, setEndsAt] = useState("");
+  const [isFounder, setIsFounder] = useState(false);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
     fetch(`/api/admin/families/${id}`)
       .then((res) => (res.ok ? (res.json() as Promise<FamilyDetail>) : Promise.reject())
       )
-      .then((data) => applyFamily(data, setFamily, setStatus, setEndsAt, setLoading))
+      .then((data) => applyFamily(data, setFamily, setStatus, setEndsAt, setIsFounder, setLoading))
       .catch(() => setLoading(false));
   }, [id, reload]);
 
@@ -65,6 +69,7 @@ export default function FamilyDetailPage() {
       body: JSON.stringify({
         subscriptionStatus: status,
         subscriptionEndsAt: endsAt || null,
+        isFounder,
       }),
     });
     setSaving(false);
@@ -138,6 +143,15 @@ export default function FamilyDetailPage() {
               className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-amber-500 focus:outline-none"
             />
           </div>
+          <label className="flex cursor-pointer items-center gap-2 self-end pb-2">
+            <input
+              type="checkbox"
+              checked={isFounder}
+              onChange={(e) => setIsFounder(e.target.checked)}
+              className="h-4 w-4 accent-amber-500"
+            />
+            <span className="text-sm text-slate-300">Fondateur (PRO permanent)</span>
+          </label>
           <button
             onClick={() => void handleSave()}
             disabled={saving}

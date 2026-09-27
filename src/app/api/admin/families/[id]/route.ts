@@ -17,6 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       slug: true,
       subscriptionStatus: true,
       subscriptionEndsAt: true,
+      isFounder: true,
       stripeCustomerId: true,
       stripeSubscriptionId: true,
       createdAt: true,
@@ -49,6 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = (await request.json()) as {
     subscriptionStatus?: string;
     subscriptionEndsAt?: string | null;
+    isFounder?: boolean;
   };
 
   const allowed = ["FREE", "PRO", "PRO_CANCELED", "PRO_PAST_DUE"];
@@ -65,8 +67,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ...(body.subscriptionEndsAt !== undefined
         ? { subscriptionEndsAt: body.subscriptionEndsAt ? new Date(body.subscriptionEndsAt) : null }
         : {}),
+      ...(body.isFounder !== undefined ? { isFounder: body.isFounder } : {}),
     },
-    select: { id: true, subscriptionStatus: true, subscriptionEndsAt: true },
+    select: { id: true, subscriptionStatus: true, subscriptionEndsAt: true, isFounder: true },
   });
 
   return NextResponse.json(updated);

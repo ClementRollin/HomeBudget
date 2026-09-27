@@ -79,8 +79,9 @@ export const getFamilySubscription = async (
   const { prisma } = await import("@/lib/prisma");
   const family = await prisma.family.findUnique({
     where: { id: familyId },
-    select: { subscriptionStatus: true, subscriptionEndsAt: true },
+    select: { subscriptionStatus: true, subscriptionEndsAt: true, isFounder: true },
   });
   if (!family) throw new Error("Famille introuvable");
-  return family;
+  if (family.isFounder) return { subscriptionStatus: "PRO", subscriptionEndsAt: null };
+  return { subscriptionStatus: family.subscriptionStatus, subscriptionEndsAt: family.subscriptionEndsAt };
 };

@@ -88,6 +88,7 @@ model Family {
   stripePriceId        String?
   subscriptionStatus    SubscriptionStatus @default(FREE)
   subscriptionEndsAt    DateTime?
+  isFounder             Boolean            @default(false)
   onboardingCompletedAt DateTime?
   users                 User[]
   members              FamilyMember[]
